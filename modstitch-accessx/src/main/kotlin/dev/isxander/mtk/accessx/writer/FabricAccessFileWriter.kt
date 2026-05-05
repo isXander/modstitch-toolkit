@@ -75,7 +75,7 @@ internal class FabricAccessFileWriter(
                     .append("inject-interface\t")
                     .append(entry.targetClass)
                     .append('\t')
-                    .append(entry.interfaceToInject)
+                    .appendLine(entry.interfaceToInject)
             }
             is AccessEntry.ExtendEnum -> {
                 writer
@@ -83,7 +83,7 @@ internal class FabricAccessFileWriter(
                     .append("extend-enum\t")
                     .append(entry.targetClass)
                     .append('\t')
-                    .append(entry.enumConstant)
+                    .appendLine(entry.enumConstant)
             }
         }
 

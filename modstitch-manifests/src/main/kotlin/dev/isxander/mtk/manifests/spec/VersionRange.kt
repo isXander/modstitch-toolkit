@@ -1,4 +1,4 @@
-package dev.isxander.mtk.manifests
+package dev.isxander.mtk.manifests.spec
 
 import java.io.Serializable
 

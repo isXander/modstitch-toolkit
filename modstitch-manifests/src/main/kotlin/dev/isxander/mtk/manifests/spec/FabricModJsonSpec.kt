@@ -1,4 +1,4 @@
-package dev.isxander.mtk.manifests
+package dev.isxander.mtk.manifests.spec
 
 import dev.isxander.mtk.accessx.plugin.ConvertAccessxTask
 import org.gradle.api.provider.ListProperty
@@ -7,6 +7,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.kotlin.dsl.*
 
 /**
  * Models a `fabric.mod.json` v1 manifest.
@@ -16,10 +17,6 @@ import org.gradle.api.tasks.TaskProvider
  * dependency types (`depends`, `suggests`, `conflicts`, `breaks`).
  */
 abstract class FabricModJsonSpec : ModManifestSpec() {
-    /** The schema version of the file. Must be `1` for this spec. */
-    @get:Input
-    abstract val schemaVersion: Property<Int>
-
     /** Side(s) the mod runs on. Absent means both. `BOTH` serialises as `*`. */
     @get:Input
     @get:Optional
@@ -50,7 +47,14 @@ abstract class FabricModJsonSpec : ModManifestSpec() {
     @get:Optional
     abstract val languageAdapters: MapProperty<String, String>
 
-    /** Free-form custom data, encoded to JSON via Gson. */
+    /**
+     * Free-form custom data, encoded to JSON via Night Config.
+     *
+     * Values must be `java.io.Serializable` (primitives, strings, lists, and
+     * maps thereof) so the task input can be fingerprinted and survive the
+     * Gradle configuration cache. Non-serialisable values will fail the build
+     * at task snapshotting time.
+     */
     @get:Input
     @get:Optional
     abstract val customData: MapProperty<String, Any>
@@ -70,9 +74,8 @@ abstract class FabricModJsonSpec : ModManifestSpec() {
      */
     fun from(other: FabricModJsonSpec) {
         super.from(other)
-        schemaVersion.set(other.schemaVersion)
-        environment.set(other.environment)
-        accessWidener.set(other.accessWidener)
+        environment = other.environment
+        accessWidener = other.accessWidener
         provides.addAll(other.provides)
         jars.addAll(other.jars)
         entrypoints.addAll(other.entrypoints)
@@ -82,23 +85,23 @@ abstract class FabricModJsonSpec : ModManifestSpec() {
     }
 
     /** Sets [environment] to [Side.CLIENT]. */
-    fun client() { environment.set(Side.CLIENT) }
-
-    /** Sets [environment] to [Side.SERVER]. */
-    fun server() { environment.set(Side.SERVER) }
-
-    fun entrypoint(name: String, value: String) {
-        create(Entrypoint::class.java, entrypoints) {
-            this.entrypoint.set(name)
-            this.value.set(value)
-        }
+    fun client() {
+        environment = Side.CLIENT
     }
 
-    fun entrypoint(name: String, value: String, adapter: String) {
+    /** Sets [environment] to [Side.SERVER]. */
+    fun server() {
+        environment = Side.SERVER
+    }
+
+    @JvmOverloads
+    fun entrypoint(name: String, value: String, adapter: String? = null) {
         create(Entrypoint::class.java, entrypoints) {
-            this.entrypoint.set(name)
-            this.value.set(value)
-            this.adapter.set(adapter)
+            this.entrypoint = name
+            this.value = value
+            if (adapter != null) {
+                this.adapter = adapter
+            }
         }
     }
 

@@ -3,9 +3,18 @@ kotlin-dsl = "6.5.7"
 plugin-publish = "2.0.0"
 fabric-loom = "1.16.1"
 mod-dev-gradle = "2.0.141"
+night-config = "3.8.4"
+junit-jupiter = "5.13.4"
+junit-platform = "1.13.4"
 
 [plugins]
 kotlin-dsl = { id = "org.gradle.kotlin.kotlin-dsl", version.ref = "kotlin-dsl" }
 plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "plugin-publish" }
 fabric-loom = { id = "net.fabricmc.fabric-loom", version.ref = "fabric-loom" }
 mod-dev-gradle = { id = "net.neoforged.moddev", version.ref = "mod-dev-gradle" }
+
+[libraries]
+night-config-toml = { module = "com.electronwill.night-config:toml", version.ref = "night-config" }
+night-config-json = { module = "com.electronwill.night-config:json", version.ref = "night-config" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }

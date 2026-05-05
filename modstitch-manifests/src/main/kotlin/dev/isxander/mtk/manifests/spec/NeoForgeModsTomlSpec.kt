@@ -1,10 +1,11 @@
-package dev.isxander.mtk.manifests
+package dev.isxander.mtk.manifests.spec
 
 import dev.isxander.mtk.accessx.plugin.ConvertAccessxTask
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskProvider
 
@@ -50,6 +51,10 @@ abstract class NeoForgeModsTomlSpec : ModManifestSpec() {
     @get:Input
     @get:Optional
     abstract val namespace: Property<String>
+
+    @get:Internal
+    val logoFile: Property<String>
+        get() = iconPath
 
     /** Whether the logo uses linear (true) or nearest (false) filtering. */
     @get:Input

@@ -1,4 +1,4 @@
-package dev.isxander.mtk.manifests
+package dev.isxander.mtk.manifests.spec
 
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
@@ -144,6 +144,14 @@ abstract class ModManifestSpec {
         @get:Input
         @get:Optional
         abstract val side: Property<Side>
+
+        /**
+         * Mod IDs that must be present for this mixin to apply.
+         * Only applies on `neoforge.mods.toml`.
+         */
+        @get:Input
+        @get:Optional
+        abstract val requiredMods: ListProperty<String>
     }
 
     abstract class Dependency {

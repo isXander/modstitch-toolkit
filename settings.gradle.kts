@@ -18,6 +18,8 @@ dependencyResolutionManagement {
 
 rootProject.name = "modstitch-toolkit"
 
+includeBuild("test-playground")
+
 include("modstitch-accessx")
 include("modstitch-manifests")
 include("modstitch-nol")

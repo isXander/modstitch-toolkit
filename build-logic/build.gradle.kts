@@ -2,6 +2,12 @@ plugins {
     `kotlin-dsl`
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
 dependencies {
     implementation(libs.plugins.kotlin.dsl.asDependency())
     implementation(libs.plugins.plugin.publish.asDependency())

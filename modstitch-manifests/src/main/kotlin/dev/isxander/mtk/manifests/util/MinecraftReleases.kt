@@ -1,5 +1,6 @@
-package dev.isxander.mtk.manifests
+package dev.isxander.mtk.manifests.util
 
+import dev.isxander.mtk.manifests.spec.VersionRange
 import org.gradle.api.provider.ValueSource
 import org.gradle.api.provider.ValueSourceParameters
 import java.net.URI
