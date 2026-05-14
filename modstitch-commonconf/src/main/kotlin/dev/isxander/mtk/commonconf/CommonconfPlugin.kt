@@ -27,18 +27,20 @@ class CommonconfPlugin : Plugin<Project> {
 
         configureBackingPlugins(
             target,
-            { loom ->
+            loom = {
                 val extension = target.extensions.getByType<CommonconfExtension>()
-                applyLoom(target, loom, extension)
+                applyLoom(target, extension)
             },
-            { modDev ->
+            mdg = {
                 val extension = target.extensions.getByType<CommonconfExtension>()
-                applyMdg(target, modDev, extension)
+                applyMdg(target, extension)
             },
         )
     }
 
-    private fun applyLoom(target: Project, loom: LoomGradleExtensionAPI, extension: CommonconfExtension) {
+    private fun applyLoom(target: Project, extension: CommonconfExtension) {
+        val loom = target.extensions.getByType<LoomGradleExtensionAPI>()
+
         target.dependencies {
             "minecraft"(extension.minecraftVersion.map { "com.mojang:minecraft:$it" })
             "implementation"(extension.loaderVersion.map { "net.fabricmc:fabric-loader:$it" })
@@ -82,7 +84,9 @@ class CommonconfPlugin : Plugin<Project> {
         }
     }
 
-    private fun applyMdg(target: Project, modDev: ModDevExtension, extension: CommonconfExtension) {
+    private fun applyMdg(target: Project, extension: CommonconfExtension) {
+        val modDev = target.extensions.getByType<ModDevExtension>()
+
         // Estimate minecraftVersion with by parsing the loader version
         extension.minecraftVersion.convention(
             extension.loaderVersion.map { convertNeoForgeVersionToMinecraftVersion(it) }
@@ -149,7 +153,9 @@ class CommonconfPlugin : Plugin<Project> {
         internal fun disableIdeRuns(target: Project) {
             configureBackingPlugins(
                 target,
-                { loom ->
+                loom = {
+                    val loom = target.extensions.getByType<LoomGradleExtensionAPI>()
+
                     loom.runs.named("client") {
                         loom.runs.remove(this)
                     }
@@ -157,7 +163,9 @@ class CommonconfPlugin : Plugin<Project> {
                         loom.runs.remove(this)
                     }
                 },
-                { modDev ->
+                mdg = {
+                    val modDev = target.extensions.getByType<ModDevExtension>()
+
                     modDev.runs.named("client") {
                         modDev.runs.remove(this)
                     }
