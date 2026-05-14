@@ -1,0 +1,38 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT AND Apache-2.0"
+showAsResourcePack = true
+services = ["example.Service"]
+issueTrackerURL = "https://example.test/issues"
+
+[properties]
+catalogueImageIcon = "assets/example/icon.png"
+
+[[mods]]
+modId = "example"
+namespace = "example_ns"
+version = "1.2.3"
+displayName = "Example Mod"
+description = "Does useful things"
+logoFile = "assets/example/icon.png"
+logoBlur = false
+credits = "Contributor One\nContributor Two"
+authors = "Author One, Author Two"
+displayURL = "https://example.test"
+
+[[features.example]]
+javaVersion = "[21,)"
+
+[[modproperties.example]]
+catalogueItemIcon = "example:item"
+
+[[dependencies.example]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.20,1.21)"
+
+[[dependencies.example]]
+modId = "client_only"
+type = "optional"
+versionRange = "[1.0,)"
+side = "CLIENT"

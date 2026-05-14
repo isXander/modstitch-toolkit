@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "example",
+  "version": "1.2.3",
+  "environment": "client",
+  "entrypoints": {
+    "main": "example.Main",
+    "client": {
+      "value": "example.Client",
+      "adapter": "kotlin"
+    }
+  },
+  "mixins": [
+    "example.mixins.json",
+    {
+      "config": "example.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "accessWidener": "example.accesswidener",
+  "depends": {
+    "minecraft": ">=1.20 <1.21"
+  },
+  "suggests": {
+    "modmenu": "*"
+  },
+  "breaks": {
+    "badmod": "=2.0"
+  },
+  "name": "Example Mod",
+  "description": "Does useful things",
+  "authors": [
+    "isXander"
+  ],
+  "contact": {
+    "homepage": "https://example.test",
+    "sources": "https://example.test/source",
+    "issues": "https://example.test/issues",
+    "discord": "https://example.test/discord"
+  },
+  "license": [
+    "MIT",
+    "Apache-2.0"
+  ],
+  "icon": "assets/example/icon.png",
+  "languageAdapters": {
+    "kotlin": "net.fabricmc.language.kotlin.KotlinAdapter"
+  },
+  "custom": {
+    "extra": "value"
+  }
+}

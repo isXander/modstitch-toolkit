@@ -13,6 +13,12 @@ version = "1.0.0"
 commonconf {
     minecraftVersion = "26.1.2"
     loaderVersion = "0.19.2"
+
+    runs {
+        register("client") {
+            client()
+        }
+    }
 }
 
 manifests {

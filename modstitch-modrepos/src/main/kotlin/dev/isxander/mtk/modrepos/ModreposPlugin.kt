@@ -24,8 +24,8 @@ class ModreposPlugin : Plugin<Project> {
         register<GegyExtension>(target, "gegy")
     }
 
-    private inline fun <reified T> register(target: Project, name: String)
-    where T : ModRepoExtension {
+    private fun <T> register(target: Project, name: String, `class`: Class<T>)
+            where T : ModRepoExtension {
         val repositories = target.repositories
 
         // RepositoryHandler implements ExtensionAware at runtime, but not compile time.
@@ -39,12 +39,12 @@ class ModreposPlugin : Plugin<Project> {
         repositories.extensions.create(
             ModRepoExtension::class.java,
             name,
-            T::class.java,
+            `class`,
             repositories,
         )
     }
 
-    private inline fun <reified T> registerExclusive(target: Project, name: String)
+    private fun <T> registerExclusive(target: Project, name: String, `class`: Class<T>)
             where T : ExclusiveModRepoExtension {
         val repositories = target.repositories
 
@@ -59,8 +59,18 @@ class ModreposPlugin : Plugin<Project> {
         repositories.extensions.create(
             ExclusiveModRepoExtension::class.java,
             name,
-            T::class.java,
+            `class`,
             repositories,
         )
+    }
+
+    private inline fun <reified T> register(target: Project, name: String)
+            where T : ModRepoExtension {
+        register(target, name, T::class.java)
+    }
+
+    private inline fun <reified T> registerExclusive(target: Project, name: String)
+            where T : ExclusiveModRepoExtension {
+        registerExclusive(target, name, T::class.java)
     }
 }

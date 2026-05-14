@@ -1,12 +1,18 @@
-package dev.isxander.mtk.commonconf
+package dev.isxander.mtk.commonconf.extensions
 
+import dev.isxander.mtk.commonconf.CommonconfPlugin
+import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
-import org.gradle.kotlin.dsl.*
+import org.gradle.kotlin.dsl.property
 import javax.inject.Inject
 
-abstract class CommonconfExtension @Inject constructor(objects: ObjectFactory, ) {
+abstract class CommonconfExtension @Inject constructor(
+    objects: ObjectFactory,
+    private val project: Project,
+) {
     /**
      * Defines the Minecraft version this project targets.
      *
@@ -41,4 +47,21 @@ abstract class CommonconfExtension @Inject constructor(objects: ObjectFactory, )
      */
     val accessxFiles: ConfigurableFileCollection =
         objects.fileCollection()
+
+    /**
+     * Defines run configurations for this project.
+     *
+     * - On Loom: `loom.runs` is configured to contain these objects.
+     * - On ModDevGradle: `neoForge.runs` is configured to contain these objects.
+     *
+     * This plugin calls `register` on the backing container, so if they already exist,
+     * Gradle will throw an error. Loom (and presumably ModDevGradle) automatically registers
+     * default run configurations
+     */
+    val runs: NamedDomainObjectContainer<RunConfig> =
+        objects.domainObjectContainer(RunConfig::class.java)
+
+    fun disableDefaultRuns() {
+        CommonconfPlugin.disableIdeRuns(project)
+    }
 }

@@ -1,5 +1,8 @@
 package dev.isxander.mtk.commonconf
 
+import dev.isxander.mtk.commonconf.extensions.CommonconfExtension
+import dev.isxander.mtk.commonconf.util.Side
+import dev.isxander.mtk.commonconf.util.configureBackingPlugins
 import dev.isxander.mtk.commonconf.util.convertNeoForgeVersionToMinecraftVersion
 import net.fabricmc.loom.api.LoomGradleExtensionAPI
 import net.fabricmc.loom.util.Constants
@@ -22,19 +25,20 @@ class CommonconfPlugin : Plugin<Project> {
             isTransitive = false
         }
 
-        target.pluginManager.withPlugin("net.fabricmc.fabric-loom") {
-            val extension = target.extensions.getByType<CommonconfExtension>()
-            applyLoom(target, extension)
-        }
-        target.pluginManager.withPlugin("net.neoforged.moddev") {
-            val extension = target.extensions.getByType<CommonconfExtension>()
-            applyMdg(target, extension)
-        }
+        configureBackingPlugins(
+            target,
+            { loom ->
+                val extension = target.extensions.getByType<CommonconfExtension>()
+                applyLoom(target, loom, extension)
+            },
+            { modDev ->
+                val extension = target.extensions.getByType<CommonconfExtension>()
+                applyMdg(target, modDev, extension)
+            },
+        )
     }
 
-    private fun applyLoom(target: Project, extension: CommonconfExtension) {
-        val loom = target.extensions.getByType<LoomGradleExtensionAPI>()
-
+    private fun applyLoom(target: Project, loom: LoomGradleExtensionAPI, extension: CommonconfExtension) {
         target.dependencies {
             "minecraft"(extension.minecraftVersion.map { "com.mojang:minecraft:$it" })
             "implementation"(extension.loaderVersion.map { "net.fabricmc:fabric-loader:$it" })
@@ -52,11 +56,33 @@ class CommonconfPlugin : Plugin<Project> {
         target.configurations.named(Constants.Configurations.INCLUDE) {
             extendsFrom(target.configurations.getByName("ccJarInJar"))
         }
+
+        extension.runs.configureEach {
+            val ccSpec = this
+
+            loom.runs.register(ccSpec.name) {
+                val loomSpec = this
+
+                loomSpec.displayName = ccSpec.ideRunName
+                loomSpec.jvmArguments = ccSpec.jvmArgs
+                loomSpec.programArguments = ccSpec.programArgs
+                loomSpec.environmentVars = ccSpec.environmentVars
+                loomSpec.systemProperties = ccSpec.systemProperties
+                loomSpec.runtimeEnvironment = ccSpec.side.map {
+                    when (it) {
+                        Side.Client -> "client"
+                        Side.Server -> "server"
+                    }
+                }
+                loomSpec.mainClass = ccSpec.mainClass
+                loomSpec.sourceSet = ccSpec.sourceSet.map { it.name }
+                loomSpec.runDirectory = ccSpec.gameDirectory
+                loomSpec.generateRunConfig = ccSpec.ideRun
+            }
+        }
     }
 
-    private fun applyMdg(target: Project, extension: CommonconfExtension) {
-        val modDev = target.extensions.getByType<ModDevExtension>()
-
+    private fun applyMdg(target: Project, modDev: ModDevExtension, extension: CommonconfExtension) {
         // Estimate minecraftVersion with by parsing the loader version
         extension.minecraftVersion.convention(
             extension.loaderVersion.map { convertNeoForgeVersionToMinecraftVersion(it) }
@@ -91,6 +117,55 @@ class CommonconfPlugin : Plugin<Project> {
                     extendsFrom(target.configurations.getByName("ccJarInJar"))
                 }
             }
+        }
+
+        extension.runs.configureEach {
+            val ccSpec = this
+
+            modDev.runs.register(ccSpec.name) {
+                val mdgSpec = this
+
+                mdgSpec.ideName = ccSpec.ideRunName.zip(ccSpec.ideRun) { name, shouldRun ->
+                    if (shouldRun) name else ""
+                }
+                mdgSpec.gameDirectory = ccSpec.gameDirectory
+                mdgSpec.environment = ccSpec.environmentVars
+                mdgSpec.systemProperties = ccSpec.systemProperties
+                mdgSpec.mainClass = ccSpec.mainClass
+                mdgSpec.programArguments = ccSpec.programArgs
+                mdgSpec.jvmArguments = ccSpec.jvmArgs
+                mdgSpec.type = ccSpec.side.zip(ccSpec.datagen) { side, datagen ->
+                    when (side) {
+                        Side.Client -> if (datagen) "clientData" else "client"
+                        Side.Server -> if (datagen) "serverData" else "server"
+                    }
+                }
+                mdgSpec.sourceSet = ccSpec.sourceSet
+            }
+        }
+    }
+
+    companion object {
+        internal fun disableIdeRuns(target: Project) {
+            configureBackingPlugins(
+                target,
+                { loom ->
+                    loom.runs.named("client") {
+                        loom.runs.remove(this)
+                    }
+                    loom.runs.named("server") {
+                        loom.runs.remove(this)
+                    }
+                },
+                { modDev ->
+                    modDev.runs.named("client") {
+                        modDev.runs.remove(this)
+                    }
+                    modDev.runs.named("server") {
+                        modDev.runs.remove(this)
+                    }
+                },
+            )
         }
     }
 }
