@@ -11,7 +11,6 @@ Modstitch Tools primarily help with multi-loader mod development, but can be use
 |----------------------------------------------------------|----------------|---------------------------------------------------------------------------------------------|
 | [modstitch-accessx](./modstitch-accessx/README.md)       | 0.1.0          | A Gradle plugin to help convert between various formats of access modifier files.           |
 | [modstitch-manifests](./modstitch-manifests/README.md)   | 0.1.0          | A Gradle plugin to help generate mod metadata files (e.g.                                   |
-| [modstitch-nol](./modstitch-nol/README.md)               | 0.1.0          | A Gradle plugin to allow you to develop for *NeoForge on Loom* (NOL).                       |
 | [modstitch-fapidep](./modstitch-fapidep/README.md)       | 0.1.0          | A Gradle plugin to depend on specific Fabric API modules,                                   |
 | [modstitch-commonconf](./modstitch-commonconf/README.md) | 0.1.0          | A Gradle plugin to apply type-safe configuration to either Fabric Loom or ModDevGradle,     |
 | [modstitch-modrepos](./modstitch-modrepos/README.md)     | 0.1.0          | A Gradle plugin to provide shorthands for many modding-specific repositories.               |

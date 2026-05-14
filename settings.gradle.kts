@@ -22,7 +22,6 @@ includeBuild("test-playground")
 
 include("modstitch-accessx")
 include("modstitch-manifests")
-include("modstitch-nol")
 include("modstitch-fapidep")
 include("modstitch-commonconf")
 include("modstitch-modrepos")
