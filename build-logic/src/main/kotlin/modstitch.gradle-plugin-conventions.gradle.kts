@@ -9,7 +9,6 @@ plugins {
 val libs = the<LibrariesForLibs>()
 
 group = "dev.isxander"
-version = "0.1.0"
 
 repositories {
     mavenCentral()

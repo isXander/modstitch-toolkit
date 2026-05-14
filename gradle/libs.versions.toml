@@ -1,6 +1,6 @@
 [versions]
 kotlin-dsl = "6.5.7"
-plugin-publish = "2.0.0"
+plugin-publish = "2.1.1"
 fabric-loom = "1.17.0-alpha.8"
 mod-dev-gradle = "2.0.141"
 night-config = "3.8.4"

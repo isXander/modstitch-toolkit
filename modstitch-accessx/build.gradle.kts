@@ -1,3 +1,5 @@
+import org.gradle.plugin.compatibility.compatibility
+
 plugins {
     id("modstitch.gradle-plugin-conventions")
 }
@@ -12,6 +14,11 @@ gradlePlugin {
             displayName = "MTK: Accessx"
             description = "Access widener/transformer conversion between Fabric and Forge formats."
             tags = listOf("modstitch", "minecraft", "access-widener", "access-transformer")
+            compatibility {
+                features {
+                    configurationCache = true
+                }
+            }
         }
     }
 }

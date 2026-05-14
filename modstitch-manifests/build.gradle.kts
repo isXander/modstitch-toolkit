@@ -1,3 +1,5 @@
+import org.gradle.plugin.compatibility.compatibility
+
 plugins {
     id("modstitch.gradle-plugin-conventions")
 }
@@ -20,6 +22,11 @@ gradlePlugin {
             displayName = "MTK: Manifests"
             description = "Mod manifest generation across loaders."
             tags = listOf("modstitch", "minecraft", "manifest")
+            compatibility {
+                features {
+                    configurationCache = true
+                }
+            }
         }
     }
 }

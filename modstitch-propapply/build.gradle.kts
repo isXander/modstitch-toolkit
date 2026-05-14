@@ -1,3 +1,5 @@
+import org.gradle.plugin.compatibility.compatibility
+
 plugins {
     id("modstitch.gradle-plugin-conventions")
 }
@@ -12,6 +14,11 @@ gradlePlugin {
             displayName = "MTK: Property Application"
             description = "Applies one of various plugins based on a gradle property."
             tags = listOf("modstitch", "minecraft")
+            compatibility {
+                features {
+                    configurationCache = true
+                }
+            }
         }
     }
 }

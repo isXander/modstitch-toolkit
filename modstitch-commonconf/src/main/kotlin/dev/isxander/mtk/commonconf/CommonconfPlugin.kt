@@ -2,8 +2,9 @@ package dev.isxander.mtk.commonconf
 
 import dev.isxander.mtk.commonconf.extensions.CommonconfExtension
 import dev.isxander.mtk.commonconf.util.Side
-import dev.isxander.mtk.commonconf.util.configureBackingPlugins
 import dev.isxander.mtk.commonconf.util.convertNeoForgeVersionToMinecraftVersion
+import dev.isxander.mtk.commonconf.util.withFabricLoom
+import dev.isxander.mtk.commonconf.util.withModDev
 import net.fabricmc.loom.api.LoomGradleExtensionAPI
 import net.fabricmc.loom.util.Constants
 import net.neoforged.moddevgradle.dsl.ModDevExtension
@@ -12,7 +13,6 @@ import net.neoforged.moddevgradle.legacyforge.dsl.LegacyForgeExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.*
-import org.gradle.kotlin.dsl.findByType
 
 class CommonconfPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -25,17 +25,14 @@ class CommonconfPlugin : Plugin<Project> {
             isTransitive = false
         }
 
-        configureBackingPlugins(
-            target,
-            loom = {
-                val extension = target.extensions.getByType<CommonconfExtension>()
-                applyLoom(target, extension)
-            },
-            mdg = {
-                val extension = target.extensions.getByType<CommonconfExtension>()
-                applyMdg(target, extension)
-            },
-        )
+        target.pluginManager.withFabricLoom {
+            val extension = target.extensions.getByType<CommonconfExtension>()
+            applyLoom(target, extension)
+        }
+        target.pluginManager.withModDev {
+            val extension = target.extensions.getByType<CommonconfExtension>()
+            applyMdg(target, extension)
+        }
     }
 
     private fun applyLoom(target: Project, extension: CommonconfExtension) {
@@ -151,29 +148,26 @@ class CommonconfPlugin : Plugin<Project> {
 
     companion object {
         internal fun disableIdeRuns(target: Project) {
-            configureBackingPlugins(
-                target,
-                loom = {
-                    val loom = target.extensions.getByType<LoomGradleExtensionAPI>()
+            target.pluginManager.withFabricLoom {
+                val loom = target.extensions.getByType<LoomGradleExtensionAPI>()
 
-                    loom.runs.named("client") {
-                        loom.runs.remove(this)
-                    }
-                    loom.runs.named("server") {
-                        loom.runs.remove(this)
-                    }
-                },
-                mdg = {
-                    val modDev = target.extensions.getByType<ModDevExtension>()
+                loom.runs.named("client") {
+                    loom.runs.remove(this)
+                }
+                loom.runs.named("server") {
+                    loom.runs.remove(this)
+                }
+            }
+            target.pluginManager.withModDev {
+                val modDev = target.extensions.getByType<ModDevExtension>()
 
-                    modDev.runs.named("client") {
-                        modDev.runs.remove(this)
-                    }
-                    modDev.runs.named("server") {
-                        modDev.runs.remove(this)
-                    }
-                },
-            )
+                modDev.runs.named("client") {
+                    modDev.runs.remove(this)
+                }
+                modDev.runs.named("server") {
+                    modDev.runs.remove(this)
+                }
+            }
         }
     }
 }

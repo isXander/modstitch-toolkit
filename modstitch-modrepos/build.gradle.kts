@@ -1,3 +1,5 @@
+import org.gradle.plugin.compatibility.compatibility
+
 plugins {
     id("modstitch.gradle-plugin-conventions")
 }
@@ -12,6 +14,11 @@ gradlePlugin {
             displayName = "MTK: Modrepos"
             description = "Provides shorthands to many common minecraft-specific repositories."
             tags = listOf("modstitch-toolkit", "minecraft")
+            compatibility {
+                features {
+                    configurationCache = true
+                }
+            }
         }
     }
 }

@@ -1,16 +1,11 @@
 package dev.isxander.mtk.commonconf.util
 
-import org.gradle.api.Project
+import org.gradle.api.Action
+import org.gradle.api.plugins.AppliedPlugin
+import org.gradle.api.plugins.PluginManager
 
-internal fun configureBackingPlugins(
-    target: Project,
-    loom: () -> Unit,
-    mdg: () -> Unit,
-) {
-    target.pluginManager.withPlugin("net.fabricmc.fabric-loom") {
-        loom()
-    }
-    target.pluginManager.withPlugin("net.neoforged.moddev") {
-        mdg()
-    }
-}
+internal fun PluginManager.withFabricLoom(action: Action<in AppliedPlugin>) =
+    withPlugin("net.fabricmc.fabric-loom", action)
+
+internal fun PluginManager.withModDev(action: Action<in AppliedPlugin>) =
+    withPlugin("net.neoforged.moddev", action)

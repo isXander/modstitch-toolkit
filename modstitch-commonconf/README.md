@@ -24,12 +24,12 @@ commonconf {
     // Consider using `modstitch-accessx` tool to convert between formats 
     // and share a single source of truth for your accessx files.
     accessxFiles.from(layout.projectDirectory.file("mod.accessWidener"))
+
+    // Removes Loom's and MDG's automatically created run configurations.
+    disableDefaultRuns()
     
     // Configure run configurations for both Loom and MDG
     runs {
-        // Prevents Loom and MDG from automatically creating run configurations.
-        removeDefaultRuns()
-        
         register("client") {
             // configure a client-side run
             client()

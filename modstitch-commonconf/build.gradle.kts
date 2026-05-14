@@ -1,6 +1,10 @@
+import org.gradle.plugin.compatibility.compatibility
+
 plugins {
     id("modstitch.gradle-plugin-conventions")
 }
+
+version = "0.1.1"
 
 dependencies {
     compileOnly(libs.plugins.fabric.loom.asDependency())
@@ -15,6 +19,11 @@ gradlePlugin {
             displayName = "MTK: Commonconf"
             description = "Shared configuration helpers for Minecraft projects."
             tags = listOf("modstitch", "minecraft")
+            compatibility {
+                features {
+                    configurationCache = true
+                }
+            }
         }
     }
 }

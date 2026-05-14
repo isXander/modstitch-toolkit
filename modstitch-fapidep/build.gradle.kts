@@ -1,3 +1,5 @@
+import org.gradle.plugin.compatibility.compatibility
+
 plugins {
     id("modstitch.gradle-plugin-conventions")
 }
@@ -16,6 +18,11 @@ gradlePlugin {
             displayName = "MTK: Fapidep"
             description = "Fabric API dependency helpers for Modstitch."
             tags = listOf("modstitch", "minecraft", "fabric")
+            compatibility {
+                features {
+                    configurationCache = true
+                }
+            }
         }
     }
 }
