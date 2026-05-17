@@ -202,6 +202,9 @@ dependencies {
     fabricImplementation("org.example:gizmo:1.0.0")
     // will resolve the neoforge variant of gizmo
     neoforgeImplementation("org.example:gizmo:1.0.0")
+  
+    // will resolve common variant in main, fabric variant in fabric, and neoforge variant in neoforge
+    commonImplementation("org.example:gizmo:1.0.0")
 }
 ```
 
