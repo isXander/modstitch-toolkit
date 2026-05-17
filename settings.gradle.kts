@@ -18,7 +18,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "modstitch-toolkit"
 
-includeBuild("test-playground")
+//includeBuild("test-playground")
 
 include("modstitch-accessx")
 include("modstitch-manifests")
@@ -26,3 +26,4 @@ include("modstitch-fapidep")
 include("modstitch-commonconf")
 include("modstitch-modrepos")
 include("modstitch-propapply")
+include("modstitch-multiloader")

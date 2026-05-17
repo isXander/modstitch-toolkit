@@ -3,6 +3,7 @@ kotlin-dsl = "6.5.7"
 plugin-publish = "2.1.1"
 fabric-loom = "1.17.0-alpha.8"
 mod-dev-gradle = "2.0.141"
+neogradle = "7.1.27"
 night-config = "3.8.4"
 junit-jupiter = "5.13.4"
 junit-platform = "1.13.4"
@@ -12,6 +13,7 @@ kotlin-dsl = { id = "org.gradle.kotlin.kotlin-dsl", version.ref = "kotlin-dsl" }
 plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "plugin-publish" }
 fabric-loom = { id = "net.fabricmc.fabric-loom", version.ref = "fabric-loom" }
 mod-dev-gradle = { id = "net.neoforged.moddev", version.ref = "mod-dev-gradle" }
+neogradle = { id = "net.neoforged.gradle.userdev", version.ref = "neogradle" }
 
 [libraries]
 night-config-toml = { module = "com.electronwill.night-config:toml", version.ref = "night-config" }

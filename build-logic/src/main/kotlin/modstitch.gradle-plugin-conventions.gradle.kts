@@ -19,6 +19,7 @@ repositories {
             includeGroupAndSubgroups("net.fabricmc")
         }
     }
+    maven("https://maven.neoforged.net/releases")
 }
 
 java {
