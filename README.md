@@ -15,4 +15,4 @@ Modstitch Tools primarily help with multi-loader mod development, but can be use
 | [modstitch-commonconf](./modstitch-commonconf/README.md)   | 0.1.1          | A Gradle plugin to apply type-safe configuration to either Fabric Loom or ModDevGradle,     |
 | [modstitch-modrepos](./modstitch-modrepos/README.md)       | 0.1.0          | A Gradle plugin to provide shorthands for many modding-specific repositories.               |
 | [modstitch-propapply](./modstitch-propapply/README.md)     | 0.1.0          | A Gradle plugin to apply one of various modding Gradle plugins based on a project property. |
-| [modstitch-multiloader](./modstitch-multiloader/README.md) | 0.1.0          | A Gradle plugin providing conventions for source-set-based multi-loader.                    |
+| [modstitch-multiloader](./modstitch-multiloader/README.md) | 0.1.1          | A Gradle plugin providing conventions for source-set-based multi-loader.                    |

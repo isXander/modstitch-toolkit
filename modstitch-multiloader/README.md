@@ -28,7 +28,7 @@ plugins {
     id("net.fabricmc.fabric-loom") version "x.y.z" apply false
     id("net.neoforged.gradle.userdev") version "x.y.z" apply false
     
-    id("dev.isxander.mtk.multiloader") version "0.1.0"
+    id("dev.isxander.mtk.multiloader") version "0.1.1"
 }
 
 dependencies {
