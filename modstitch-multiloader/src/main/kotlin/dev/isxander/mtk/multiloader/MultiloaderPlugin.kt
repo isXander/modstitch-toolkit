@@ -76,8 +76,8 @@ class MultiloaderPlugin : Plugin<Project> {
      * Configures the `*Elements` configurations to include mcgradleconventions' loader attribute.
      */
     private fun setupFeatures(target: Project) {
-        val fabric by target.sourceSets.registering
-        val neoforge by target.sourceSets.registering
+        val fabric = target.sourceSets.register("fabric")
+        val neoforge = target.sourceSets.register("neoforge")
 
         target.java.withSourcesJar()
 
@@ -139,12 +139,12 @@ class MultiloaderPlugin : Plugin<Project> {
      */
     private fun setupCommonConfigurations(target: Project) {
         target.configurations {
-            val commonCompileOnly by registering
-            val commonRuntimeOnly by registering
-            val commonImplementation by registering
-            val commonApi by registering
-            val commonCompileOnlyApi by registering
-            val commonAnnotationProcessor by registering
+            val commonCompileOnly = register("commonCompileOnly")
+            val commonRuntimeOnly = register("commonRuntimeOnly")
+            val commonImplementation = register("commonImplementation")
+            val commonApi = register("commonApi")
+            val commonCompileOnlyApi = register("commonCompileOnlyApi")
+            val commonAnnotationProcessor = register("commonAnnotationProcessor")
 
             fun inherit(sourceSet: SourceSet) {
                 sourceSet.compileOnlyConfigurationName { extendsFrom(commonCompileOnly) }
@@ -212,7 +212,7 @@ class MultiloaderPlugin : Plugin<Project> {
         val main = sourceSets.main.get()
         val neoforge = sourceSets.neoforge.get()
 
-        val commonNeoforgeCheck by sourceSets.registering {
+        val commonNeoforgeCheck = sourceSets.register("commonNeoforgeCheck") {
             val mainOutput = target.files(main.output)
 
             java.setSrcDirs(main.java.srcDirs)
@@ -262,7 +262,7 @@ class MultiloaderPlugin : Plugin<Project> {
             // The `main` source set *needs* Fabric Loader in order for Loom to resolve its dependencies such as
             // Mixin and ASM. We make a utility configuration for users to use so they don't need to define it twice.
             // TODO: Somehow prevent fabric-loader.jar being on the main compile classpath, and JUST let Loom resolve its dependencies
-            val fabricLoader by registering
+            val fabricLoader = register("fabricLoader")
             named(target.sourceSets.main.get().compileOnlyConfigurationName) { extendsFrom(fabricLoader) }
             named(target.sourceSets.fabric.get().implementationConfigurationName) { extendsFrom(fabricLoader) }
 
