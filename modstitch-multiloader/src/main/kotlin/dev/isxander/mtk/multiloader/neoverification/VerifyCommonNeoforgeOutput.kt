@@ -1,7 +1,13 @@
+@file:Suppress("UnstableApiUsage")
+
 package dev.isxander.mtk.multiloader.neoverification
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.problems.ProblemGroup
+import org.gradle.api.problems.ProblemId
+import org.gradle.api.problems.Problems
+import org.gradle.api.problems.Severity
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.PathSensitive
@@ -9,6 +15,7 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.nio.file.Files
+import javax.inject.Inject
 
 /**
  * Verifies that the common code is binary-compatible with the NeoForge runtime.
@@ -39,6 +46,9 @@ abstract class VerifyCommonNeoforgeOutput : DefaultTask() {
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val checkClasses: ConfigurableFileCollection
 
+    @get:Inject
+    protected abstract val problems: Problems
+
     @TaskAction
     fun verify() {
         val mainFiles = collect(mainClasses)
@@ -49,11 +59,27 @@ abstract class VerifyCommonNeoforgeOutput : DefaultTask() {
             .sorted()
 
         if (differing.isNotEmpty()) {
-            error(
-                "Common code is not NeoForge-compatible: bytecode differs from main for:\n" +
-                    differing.joinToString("\n") { "  - $it" }
-            )
+            val message = "Common code is not NeoForge-compatible: bytecode differs from main for:\n" +
+                differing.joinToString("\n") { "  - $it" }
+
+            throw problems.reporter.throwing(RuntimeException(message), PROBLEM_ID) {
+                contextualLabel("${differing.size} class file(s) compiled differently against the NeoForge classpath")
+                details(
+                    "These classes resolved to different method signatures when compiled against NeoForge. " +
+                        "This typically means common code calls a vanilla Minecraft method that NeoForge has patched."
+                )
+                solution("Move the offending call into a loader-specific source set, or guard it behind an abstraction implemented per loader.")
+                severity(Severity.ERROR)
+            }
         }
+    }
+
+    private companion object {
+        val PROBLEM_ID: ProblemId = ProblemId.create(
+            "common-neoforge-bytecode-mismatch",
+            "Common bytecode incompatible with NeoForge",
+            ProblemGroup.create("modstitch-multiloader", "Modstitch Multiloader"),
+        )
     }
 
     private fun collect(dirs: Iterable<File>): Map<String, File> {

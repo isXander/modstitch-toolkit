@@ -12,6 +12,7 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 class MultiloaderPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -187,6 +188,8 @@ class MultiloaderPlugin : Plugin<Project> {
                     from(main.output)
                 }
                 named<Jar>(sourceSet.sourcesJarTaskName) {
+                    duplicatesStrategy = DuplicatesStrategy.FAIL
+
                     from(main.allSource)
                 }
             }
@@ -233,6 +236,8 @@ class MultiloaderPlugin : Plugin<Project> {
         // against bytecode from `main` (compiled against the common classpath).
         // If they diverge, the common code resolves to different method signatures under NeoForge.
         val verifyCommonNeoforgeOutput = target.tasks.register<VerifyCommonNeoforgeOutput>("verifyCommonNeoforgeOutput") {
+            group = "modstitch/multiloader"
+
             dependsOn(main.classesTaskName, commonNeoforgeCheckClasses)
             mainClasses.from(main.output.classesDirs)
             checkClasses.from(commonNeoforgeCheck.get().output.classesDirs)
@@ -357,7 +362,7 @@ class MultiloaderPlugin : Plugin<Project> {
             from(sourceSets.neoforge.map { it.allSource })
         }
 
-        target.tasks.named("assemble") {
+        target.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
             dependsOn("universalJar", "universalSourcesJar")
         }
     }
@@ -371,7 +376,7 @@ class MultiloaderPlugin : Plugin<Project> {
         val fabric = sourceSets.fabric.get()
         val neoforge = sourceSets.neoforge.get()
 
-        target.tasks.named("assemble") {
+        target.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
             dependsOn(fabric.jarTaskName, fabric.sourcesJarTaskName)
             dependsOn(neoforge.jarTaskName, neoforge.sourcesJarTaskName)
         }
