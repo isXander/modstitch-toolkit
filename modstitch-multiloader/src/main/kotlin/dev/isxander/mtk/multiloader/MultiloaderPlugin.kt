@@ -2,19 +2,16 @@
 
 package dev.isxander.mtk.multiloader
 
+import dev.isxander.mtk.multiloader.neoverification.VerifyCommonNeoforgeOutput
 import dev.isxander.mtk.multiloader.utils.*
 import net.neoforged.gradle.common.tasks.JarJar
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
-import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
-import org.gradle.language.base.plugins.LifecycleBasePlugin
-import org.gradle.language.jvm.tasks.ProcessResources
 
 class MultiloaderPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -230,10 +227,20 @@ class MultiloaderPlugin : Plugin<Project> {
 
             runtimeClasspath = output + compileClasspath
         }
+        val commonNeoforgeCheckClasses = target.tasks.named(commonNeoforgeCheck.get().classesTaskName)
+
+        // Compare bytecode from `commonNeoforgeCheckClasses` (compiled against the NeoForge classpath)
+        // against bytecode from `main` (compiled against the common classpath).
+        // If they diverge, the common code resolves to different method signatures under NeoForge.
+        val verifyCommonNeoforgeOutput = target.tasks.register<VerifyCommonNeoforgeOutput>("verifyCommonNeoforgeOutput") {
+            dependsOn(main.classesTaskName, commonNeoforgeCheckClasses)
+            mainClasses.from(main.output.classesDirs)
+            checkClasses.from(commonNeoforgeCheck.get().output.classesDirs)
+        }
 
         // Any successful NeoForge `classes` build must prove common is NeoForge-compatible.
         target.tasks.named(neoforge.classesTaskName) {
-            dependsOn(commonNeoforgeCheck.map { it.classesTaskName })
+            dependsOn(verifyCommonNeoforgeOutput)
         }
     }
 
