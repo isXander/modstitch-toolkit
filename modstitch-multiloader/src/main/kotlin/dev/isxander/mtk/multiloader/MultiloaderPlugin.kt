@@ -139,12 +139,12 @@ class MultiloaderPlugin : Plugin<Project> {
      */
     private fun setupCommonConfigurations(target: Project) {
         target.configurations {
-            val commonCompileOnly = register("commonCompileOnly")
-            val commonRuntimeOnly = register("commonRuntimeOnly")
-            val commonImplementation = register("commonImplementation")
-            val commonApi = register("commonApi")
-            val commonCompileOnlyApi = register("commonCompileOnlyApi")
-            val commonAnnotationProcessor = register("commonAnnotationProcessor")
+            val commonCompileOnly = dependencyScope("commonCompileOnly")
+            val commonRuntimeOnly = dependencyScope("commonRuntimeOnly")
+            val commonImplementation = dependencyScope("commonImplementation")
+            val commonApi = dependencyScope("commonApi")
+            val commonCompileOnlyApi = dependencyScope("commonCompileOnlyApi")
+            val commonAnnotationProcessor = dependencyScope("commonAnnotationProcessor")
 
             fun inherit(sourceSet: SourceSet) {
                 sourceSet.compileOnlyConfigurationName { extendsFrom(commonCompileOnly) }
