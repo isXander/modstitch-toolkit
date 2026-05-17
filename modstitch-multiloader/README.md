@@ -16,7 +16,6 @@ Uses source sets for per-loader code.
 |   |--- neoforge
 |   |   |--- java
 |   |   |--- resources
-
 ```
 
 Only supports Fabric and NeoForge.
@@ -51,6 +50,11 @@ dependencies {
 
   Currently, Fabric Loom hardcodes jar-in-jar to the main source set.
   There is a PR open to fix this: https://github.com/FabricMC/fabric-loom/pull/1560
+
+- **Universal jar does not support Jar-in-Jar / JarJar**
+
+  The universal jar does not include the jar-in-jar and jarjar metadata and embedded jars.
+  This is a bug and will be fixed soon.
 
 - **Does not support split environment source sets**
 
@@ -224,7 +228,10 @@ it will not run on NeoForge due to differing method signatures.
 `modstitch-multiloader` creates a compile-time guarantee that your common source set will run on NeoForge.
 
 It does this by attempting to compile your common source set against the NeoForge-patched classpath
-when you attempt to compile the NeoForge source set. This will effectively catch these sorts of issues.
+when you attempt to compile the NeoForge source set.
+It then compares the compiled class files of the common source set against the NeoForge-patched classpath.
+
+This will effectively catch these sorts of issues.
 
 This is also compatible with any Kotlin code.
 
