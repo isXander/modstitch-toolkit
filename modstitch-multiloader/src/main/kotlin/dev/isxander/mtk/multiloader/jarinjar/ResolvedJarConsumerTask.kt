@@ -28,16 +28,16 @@ abstract class ResolvedJarConsumerTask : DefaultTask() {
                 jarInJarJsonMapper.readTree(reader)
             }
 
-            jars += resolvedJarsMetadata.path("jars").map { jar ->
+            jars += resolvedJarsMetadata.path("jars").values().map { jar ->
                 ResolvedEmbeddedJar(
-                    path = jar.path("path").asString(),
-                    group = jar.path("group").asString(),
-                    artifact = jar.path("artifact").asString(),
+                    path = jar.path("path").stringValue(),
+                    group = jar.path("group").stringValue(),
+                    artifact = jar.path("artifact").stringValue(),
                     classifier = jar.path("classifier")
                         .takeUnless { it.isMissingNode || it.isNull }
-                        ?.asString(),
-                    version = jar.path("version").asString(),
-                    mavenVersionRange = jar.path("mavenVersionRange").asString(),
+                        ?.stringValue(),
+                    version = jar.path("version").stringValue(),
+                    mavenVersionRange = jar.path("mavenVersionRange").stringValue(),
                 )
             }
         }

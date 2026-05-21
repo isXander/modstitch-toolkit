@@ -26,13 +26,13 @@ dependencies {
     fabricLoader("net.fabricmc:fabric-loader:0.19.2")
     neoforgeImplementation("net.neoforged:neoforge:26.1.2.50-beta")
 
-    add("commonInclude", "org.slf4j:slf4j-api") {
+    commonInclude("org.slf4j:slf4j-api") {
         version {
             strictly("[2.0,3.0)")
             prefer("2.0.17")
         }
     }
-    add("universalOnlyInclude", "org.jetbrains:annotations:26.0.2")
+    universalOnlyInclude("org.jetbrains:annotations:26.0.2")
 }
 
 manifests {
