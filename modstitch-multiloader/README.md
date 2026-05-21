@@ -22,6 +22,17 @@ Only supports Fabric and NeoForge.
 
 ## Usage
 
+**You must add the following lines to your `gradle.properties` file:**
+
+This is necessary until [this NeoGradle PR is merged](https://github.com/neoforged/NeoGradle/pull/316).
+
+```properties
+neogradle.subsystems.conventions.sourcesets.automatic-inclusion=false
+neogradle.subsystems.conventions.runs.create-default-run-per-type=false
+neogradle.subsystems.conventions.configurations.enabled=false
+neogradle.subsystems.conventions.jarjar.create-main-jarjar=false
+```
+
 ```kotlin
 plugins {
     // define versions of loader plugins here. can be defined elsewhere in the project e.g. settings.gradle.kts
@@ -87,11 +98,6 @@ publishMods {
 }
 ```
 
-Universal Jar-in-Jar has two configurations:
-
-- `commonInclude` embeds a dependency into the Fabric, NeoForge, and universal jars.
-- `universalOnlyInclude` embeds a dependency into the universal jar only.
-
 ### Common configurations
 
 It is common that you would need a dependency that is available across common and loader-specific code.
@@ -130,6 +136,42 @@ dependencies {
     neoforgeImplementation("org.example:cool-mod-neoforge:1.0.0")
 }
 ```
+
+For mod dependencies that publish the mcgradleconventions' loader attribute, you may use the common configurations
+to declare the dependency. This will resolve the correct variant for each source set automatically:
+
+```kotlin
+dependencies {
+    // will resolve common variant in main, fabric variant in fabric, and neoforge variant in neoforge
+    commonImplementation("org.example:cool-mod:1.0.0")
+}
+```
+
+### Jar-in-Jar support
+
+There are four important configurations for jar-in-jar support:
+
+- `commonInclude`: Jar-in-Jar the same set of dependencies across fabric, neoforge, and universal jars.
+- `fabricInclude`: Jar-in-Jar dependencies only in the fabric jar.
+- `neoforgeInclude`: Jar-in-Jar dependencies only in the neoforge jar
+- `universalOnlyInclude`: Jar-in-Jar dependencies only in the universal jar.
+
+This plugin explicitly supports Jar-in-Jar for universal jars by reimplementing the required logic for both
+mod loaders, meaning that the nested jars are *not* duplicated. 
+
+Nested jars within the universal jar are stored in the `META-INF/embeddedJars` directory.
+modstitch-multiloader automatically edits your `fabric.mod.json` and generates a `metadata.json` file
+that contains the embedded jar information. Each nested jar gets a generated `fabric.mod.json`, matching
+the behavior of the `fabric-loom` plugin.
+
+The loader-specific jars (namely using `fabricInclude` and `neoforgeInclude`) use their associated
+plugins' built-in Jar-in-Jar support. modstitch-multiloader stays out the way in these cases.
+This has the effect that nested jars appear in a slightly different location in the jar; on Fabric, it's
+`META-INF/jars/`, on NeoForge, `META-INF/jarjar/`.
+
+> [!WARNING]
+> Do not use the Fabric-Loom provided `include` configuration. An error will be thrown if you do.
+> Do not use the NeoGradle provided `jarJar` configuration.
 
 ### Run configurations
 

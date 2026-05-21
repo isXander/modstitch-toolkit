@@ -54,9 +54,12 @@ class MultiloaderPlugin @Inject constructor(
 
         // Used to provide NeoForge to the `neoforge` source set.
         // Requires the following gradle properties in the target project:
-        // - `neogradle.subsystems.conventions.sourcesets.automatic-inclusion=false`
-        // - `neogradle.subsystems.conventions.runs.create-default-run-per-type=false`
-        // - `neogradle.subsystems.conventions.configurations.enabled=false`
+        // This won't actually work until https://github.com/neoforged/NeoGradle/pull/316
+        target.extra["neogradle.subsystems.conventions.sourcesets.automatic-inclusion"] = false
+        target.extra["neogradle.subsystems.conventions.runs.create-default-run-per-type"] = false
+        target.extra["neogradle.subsystems.conventions.configurations.enabled"] = false
+        target.extra["neogradle.subsystems.conventions.jarjar.create-main-jarjar=false"] = false
+
         target.pluginManager.apply("net.neoforged.gradle.userdev")
     }
 
