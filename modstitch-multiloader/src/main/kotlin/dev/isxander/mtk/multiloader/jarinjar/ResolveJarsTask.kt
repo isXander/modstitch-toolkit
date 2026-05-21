@@ -1,8 +1,9 @@
 package dev.isxander.mtk.multiloader.jarinjar
 
 import com.electronwill.nightconfig.json.JsonFormat
+import dev.isxander.mtk.multiloader.utils.throwingUniversalJarInJarDuplicatePath
+import dev.isxander.mtk.multiloader.utils.throwingUniversalJarInJarMissingCoordinates
 import org.gradle.api.DefaultTask
-import org.gradle.api.GradleException
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ComponentSelector
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
@@ -16,6 +17,7 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.problems.Problems
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty
@@ -35,24 +37,53 @@ import java.util.LinkedHashMap
 import javax.inject.Inject
 
 /**
- * Resolves an include configuration and outputs the jars into a folder,
- * read for embedding into the universal jar.
+ * Resolves universal Jar-in-Jar dependencies into files and metadata that can be
+ * consumed by both loader-specific metadata tasks.
  *
- * Outputs resolved jar metadata to [resolvedJarsFile] for use by the loader-specific metadata generation tasks.
+ * The task intentionally owns this resolution step instead of delegating to Loom
+ * or NeoForge JarJar. Both tools know how to build metadata for their own jar,
+ * but the universal jar must embed each dependency once and then describe that
+ * same copy to both loaders.
+ *
+ * [outputDirectory] contains the jars to merge into the universal jar.
+ * [resolvedJarsFile] records the resolved coordinates, version ranges, and
+ * embedded paths needed when generating Fabric and NeoForge metadata later.
  */
 @DisableCachingByDefault(because = "The dependency resolution graph is part of this task's input.")
 abstract class ResolveJarsTask : DefaultTask() {
 
+    /**
+     * The resolved jar files to embed.
+     *
+     * File inputs let Gradle notice when dependency contents change. The
+     * resolution graph is kept separately because it carries the coordinates and
+     * requested ranges that cannot be recovered from the file collection.
+     */
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.NAME_ONLY)
     abstract val configurations: ConfigurableFileCollection
 
+    /**
+     * A stable fingerprint of the direct dependency requests feeding this task.
+     *
+     * Gradle result objects are not task inputs. This mirrors the coordinate and
+     * range data that affects generated metadata while [configurations] tracks
+     * the actual jar files.
+     */
     @get:Input
     abstract val dependencyMetadata: ListProperty<String>
 
+    /**
+     * Resolved jar artifacts used at execution time to connect files back to
+     * their Gradle component metadata.
+     */
     @get:Internal
     abstract val resolvedArtifacts: SetProperty<ResolvedArtifactResult>
 
+    /**
+     * Resolution roots used to recover the version range requested by the build
+     * author before Gradle selected a concrete artifact version.
+     */
     @get:Internal
     abstract val rootComponents: SetProperty<ResolvedComponentResult>
 
@@ -91,6 +122,16 @@ abstract class ResolveJarsTask : DefaultTask() {
     @get:Inject
     protected abstract val fileSystemOperations: FileSystemOperations
 
+    @get:Inject
+    protected abstract val problems: Problems
+
+    /**
+     * Adds a configuration to the universal Jar-in-Jar resolution.
+     *
+     * The artifact view filters the configuration to jar artifacts. The result
+     * still keeps the resolution graph because loader metadata needs module
+     * coordinates and requested Maven ranges, not only files to copy.
+     */
     fun from(configuration: Configuration) {
         val artifacts = configuration.incoming.artifactView {
             attributes.attribute(
@@ -108,17 +149,21 @@ abstract class ResolveJarsTask : DefaultTask() {
 
     @TaskAction
     fun embedJars() {
+        // Artifact results describe the selected version. Start from the
+        // resolution roots so we can keep the direct dependency's requested
+        // version range in the loader metadata.
         val requestedMetadata = resolveRequestedMetadata(rootComponents.get())
         val embeddedJars = resolvedArtifacts.get()
             .mapNotNull { artifact -> resolveArtifact(artifact, requestedMetadata) }
             .sortedWith(compareBy({ it.metadata.group }, { it.metadata.artifact }, { it.metadata.classifier.orEmpty() }, { it.metadata.path }))
 
+        // A file without coordinates cannot be represented in NeoForge JarJar
+        // metadata or given a useful generated Fabric mod id.
         val resolvedFiles = embeddedJars.mapTo(mutableSetOf()) { it.inputFile }
         val unhandledFiles = configurations.files - resolvedFiles
         if (unhandledFiles.isNotEmpty()) {
-            throw GradleException(
-                "Cannot create universal Jar-in-Jar metadata for ${unhandledFiles.joinToString { it.name }}. " +
-                    "Use module or project dependencies so Modstitch can resolve coordinates and version ranges.",
+            throw problems.reporter.throwingUniversalJarInJarMissingCoordinates(
+                unhandledFiles.map(File::getName),
             )
         }
 
@@ -129,18 +174,28 @@ abstract class ResolveJarsTask : DefaultTask() {
         val paths = mutableSetOf<String>()
         embeddedJars.forEach { jar ->
             if (!paths.add(jar.metadata.path)) {
-                throw GradleException("Trying to embed multiple jars at ${jar.metadata.path}.")
+                throw problems.reporter.throwingUniversalJarInJarDuplicatePath(jar.metadata.path)
             }
 
             val outputFile = outputDirectory.resolve(jar.metadata.path)
             outputFile.parentFile.mkdirs()
             jar.inputFile.copyTo(outputFile, overwrite = true)
+            // Fabric treats nested jars as mods. Plain library jars need the
+            // minimal Loom-style metadata marker so Fabric can load them.
             addFabricModJsonIfMissing(outputFile, jar.metadata)
         }
 
         writeResolvedJars(embeddedJars.map(ResolvedJar::metadata))
     }
 
+    /**
+     * Converts a resolved artifact into the common record used by copy and
+     * metadata tasks.
+     *
+     * The resolved variant supplies the selected coordinates. Its requested
+     * range is recovered from the root dependency map when present; transitive
+     * artifacts fall back to an open range starting at the selected version.
+     */
     private fun resolveArtifact(
         artifact: ResolvedArtifactResult,
         requestedMetadata: Map<JarIdentifier, RequestedMetadata>,
@@ -165,6 +220,14 @@ abstract class ResolveJarsTask : DefaultTask() {
         )
     }
 
+    /**
+     * Captures metadata that only exists on the dependency requests at each
+     * configured resolution root.
+     *
+     * The direct request is the range the project author declared. Transitives
+     * are still embedded as resolved artifacts, but their selected version is the
+     * only unambiguous range available at this task boundary.
+     */
     private fun resolveRequestedMetadata(rootComponents: Set<ResolvedComponentResult>): Map<JarIdentifier, RequestedMetadata> {
         val metadata = mutableMapOf<JarIdentifier, RequestedMetadata>()
 
@@ -187,6 +250,10 @@ abstract class ResolveJarsTask : DefaultTask() {
         return metadata
     }
 
+    /**
+     * Mirrors the graph data that influences generated metadata into a regular
+     * task input so dependency range changes invalidate the task.
+     */
     private fun fingerprint(rootComponent: ResolvedComponentResult): List<String> =
         rootComponent.dependencies
             .filterIsInstance<ResolvedDependencyResult>()
@@ -198,6 +265,10 @@ abstract class ResolveJarsTask : DefaultTask() {
             }
             .sorted()
 
+    /**
+     * Serialises the common resolution result for the later Fabric and NeoForge
+     * metadata tasks.
+     */
     private fun writeResolvedJars(jars: List<ResolvedEmbeddedJar>) {
         val metadataFile = resolvedJarsFile.get().asFile
         metadataFile.parentFile.mkdirs()
@@ -220,6 +291,12 @@ abstract class ResolveJarsTask : DefaultTask() {
         }
     }
 
+    /**
+     * Adds Loom-compatible synthetic Fabric metadata to plain nested libraries.
+     *
+     * Existing Fabric metadata wins. Generated metadata only exists to make
+     * regular library jars valid nested Fabric mods in the universal jar.
+     */
     private fun addFabricModJsonIfMissing(jar: File, metadata: ResolvedEmbeddedJar) {
         FileSystems.newFileSystem(jar.toPath(), emptyMap<String, Any>()).use { jarFileSystem ->
             val fabricModJsonPath = jarFileSystem.getPath("fabric.mod.json")
@@ -246,6 +323,10 @@ abstract class ResolveJarsTask : DefaultTask() {
     private fun embeddedPath(fileName: String): String =
         "${jarPath.get().trim('/')}/$fileName"
 
+    /**
+     * Gradle's artifact result does not expose a Maven classifier directly, so
+     * infer the conventional classifier suffix from the selected jar name.
+     */
     private fun ResolvedArtifactResult.classifier(coordinates: Coordinates): String? {
         val prefix = "${coordinates.artifact}-${coordinates.version}-"
         if (!file.name.startsWith(prefix)) return null
@@ -256,6 +337,10 @@ abstract class ResolveJarsTask : DefaultTask() {
             .takeIf(String::isNotBlank)
     }
 
+    /**
+     * Reads the strongest available Gradle selector constraint as the Maven
+     * range to carry into NeoForge JarJar metadata.
+     */
     private fun ComponentSelector.mavenVersionRange(): String? =
         (this as? ModuleComponentSelector)
             ?.versionConstraint
@@ -268,6 +353,10 @@ abstract class ResolveJarsTask : DefaultTask() {
                 ).firstOrNull { it.isNotBlank() }
             }
 
+    /**
+     * Variants produced by artifact views can wrap the selected external
+     * variant. Walk through wrappers before reading component coordinates.
+     */
     private fun ResolvedVariantResult.externalVariant(): ResolvedVariantResult {
         var variant = this
         while (variant.externalVariant.isPresent) {
@@ -276,6 +365,13 @@ abstract class ResolveJarsTask : DefaultTask() {
         return variant
     }
 
+    /**
+     * Finds Maven-like coordinates for both module and project variants.
+     *
+     * Published modules expose a [ModuleComponentIdentifier]. Project
+     * dependencies commonly surface coordinates through capabilities instead.
+     * Prefer the module identity when capabilities agree with it.
+     */
     private fun ResolvedVariantResult.coordinates(): Coordinates? {
         val moduleCoordinates = (owner as? ModuleComponentIdentifier)?.let { owner ->
             Coordinates(owner.group, owner.module, owner.version)

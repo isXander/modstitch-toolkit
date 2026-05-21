@@ -17,6 +17,18 @@ object ModstitchProblems {
         GROUP,
     )
 
+    val UNIVERSAL_JAR_IN_JAR_MISSING_COORDINATES_ID = ProblemId.create(
+        "jarinjar-missing-coordinates",
+        "Universal Jar-in-Jar dependency has no coordinates.",
+        GROUP,
+    )
+
+    val UNIVERSAL_JAR_IN_JAR_DUPLICATE_PATH_ID = ProblemId.create(
+        "jarinjar-duplicate-path",
+        "Universal Jar-in-Jar dependencies use the same embedded path.",
+        GROUP,
+    )
+
     val LOOM_INCLUDE_CONFIG_USAGE_ID = ProblemId.create(
         "loom-include-config-usage",
         "The Loom `include` configuration should not be used when using modstitch-multiloader.",
@@ -47,6 +59,48 @@ fun ProblemReporter.throwingUniversalJarInJarFMJParseFailure(
         )
         solution(
             "If fabric.mod.json is generated or processed by another task, check the generated file before this task runs."
+        )
+    }
+
+fun ProblemReporter.throwingUniversalJarInJarMissingCoordinates(
+    fileNames: Collection<String>,
+) = throwing(
+        GradleException(
+            "Cannot create universal Jar-in-Jar metadata for ${fileNames.joinToString()}. " +
+                "Use module or project dependencies so Modstitch can resolve coordinates and version ranges.",
+        ),
+        ModstitchProblems.UNIVERSAL_JAR_IN_JAR_MISSING_COORDINATES_ID,
+    ) {
+        severity(Severity.ERROR)
+        contextualLabel(
+            "Universal Jar-in-Jar could not identify coordinates for ${fileNames.joinToString()}.",
+        )
+        details(
+            "The universal jar describes each embedded jar to both Fabric and NeoForge. " +
+                "That metadata needs resolved dependency coordinates and version ranges, which are not " +
+                "available for these resolved files.",
+        )
+        solution(
+            "Use module or project dependencies for universal Jar-in-Jar includes.",
+        )
+    }
+
+fun ProblemReporter.throwingUniversalJarInJarDuplicatePath(
+    path: String,
+) = throwing(
+        GradleException("Trying to embed multiple jars at $path."),
+        ModstitchProblems.UNIVERSAL_JAR_IN_JAR_DUPLICATE_PATH_ID,
+    ) {
+        severity(Severity.ERROR)
+        contextualLabel(
+            "Multiple universal Jar-in-Jar dependencies resolve to '$path'.",
+        )
+        details(
+            "Embedded jars keep their resolved file names under the universal jar's embedded jar directory. " +
+                "Two dependencies cannot share the same target path because only one jar could be written there.",
+        )
+        solution(
+            "Use dependencies that resolve to distinct jar file names for universal Jar-in-Jar includes.",
         )
     }
 
