@@ -354,6 +354,11 @@ class MultiloaderPlugin @Inject constructor(
                 archiveClassifier = "neoforge"
             }
         }
+
+        target.configurations {
+            val neoforgeInclude = dependencyScope("neoforgeInclude")
+            named("neoforgeJarJar") { extendsFrom(neoforgeInclude) }
+        }
     }
 
     /**
