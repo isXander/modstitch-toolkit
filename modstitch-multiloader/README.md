@@ -46,16 +46,6 @@ dependencies {
   with `remapJar` and how that interacts with multiple source sets. This is something I would
   like to support in the future.
 
-- **Does not support Fabric Jar-in-Jar**
-
-  Currently, Fabric Loom hardcodes jar-in-jar to the main source set.
-  There is a PR open to fix this: https://github.com/FabricMC/fabric-loom/pull/1560
-
-- **Universal jar does not support Jar-in-Jar / JarJar**
-
-  The universal jar does not include the jar-in-jar and jarjar metadata and embedded jars.
-  This is a bug and will be fixed soon.
-
 - **Does not support split environment source sets**
 
   For obvious reasons, this plugin does not support split client/server source sets.
@@ -77,10 +67,13 @@ dependencies {
 This plugin registers and configures a jar that contains common, fabric, and neoforge code.
 This allows for a single distributable jar that can be used for all loaders.
 
+`universalJar` is the slim archive. `fatUniversalJar` is the distributable universal archive
+with universal Jar-in-Jar metadata and embedded jars.
+
 #### Example
 
 ```kotlin
-tasks.universalJar {
+tasks.fatUniversalJar {
     // configure the jar here
 }
 tasks.universalSourcesJar {
@@ -89,10 +82,15 @@ tasks.universalSourcesJar {
 
 // example using `me.modmuss50.mod-publish-plugin`
 publishMods {
-    file = tasks.universalJar.map { it.archiveFile }
+    file = tasks.fatUniversalJar.map { it.archiveFile }
     additionalFiles.add(tasks.universalSourcesJar.map { it.archiveFile })
 }
 ```
+
+Universal Jar-in-Jar has two configurations:
+
+- `commonInclude` embeds a dependency into the Fabric, NeoForge, and universal jars.
+- `universalOnlyInclude` embeds a dependency into the universal jar only.
 
 ### Common configurations
 
@@ -108,6 +106,7 @@ Instead, this plugin registers a set of configurations that share across all sou
 - `commonApi`
 - `commonCompileOnlyApi`
 - `commonAnnotationProcessor`
+- `commonInclude`
 
 You can use these configurations to declare dependencies across all source sets.
 
@@ -214,7 +213,7 @@ It's important to keep in mind that the Minecraft sources are shared between com
 - Access Widener / Class Tweaker files are configured via Loom which applies to both the `main` and `fabric` source sets.
 - Access Transformer files are configured via NeoGradle which applies only to the `neoforge` source set.
 
-You configure them just as you would normally using the respective plugins.
+You configure them just as you would normally, using the respective plugins.
 
 Consider using [`modstitch-accessx`](../modstitch-accessx/README.md) to have a canonical place for
 acess modification, and to convert between the various formats.

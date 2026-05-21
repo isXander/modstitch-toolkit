@@ -2,6 +2,7 @@ package dev.isxander.mtk.multiloader.jarinjar
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.file.ArchiveOperations
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CacheableTask
@@ -11,6 +12,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import javax.inject.Inject
 
 /**
  * Extracts a singular file from an input zip file, matching an ANT-style pattern.
@@ -28,12 +30,15 @@ abstract class ExtractFileFromZipTask : DefaultTask() {
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
 
+    @get:Inject
+    protected abstract val archiveOperations: ArchiveOperations
+
     @TaskAction
     fun extract() {
         val inputJarFile = inputZip.get().asFile
         val pattern = pattern.get()
 
-        val foundFile = project.zipTree(inputJarFile)
+        val foundFile = archiveOperations.zipTree(inputJarFile)
             .matching {
                 include(pattern)
             }

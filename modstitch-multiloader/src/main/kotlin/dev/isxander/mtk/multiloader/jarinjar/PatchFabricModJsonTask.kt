@@ -1,10 +1,11 @@
 package dev.isxander.mtk.multiloader.jarinjar
 
 import com.electronwill.nightconfig.core.io.ParsingException
+import com.electronwill.nightconfig.core.io.ParsingMode
 import com.electronwill.nightconfig.json.JsonFormat
+import dev.isxander.mtk.multiloader.utils.ModstitchProblems
+import dev.isxander.mtk.multiloader.utils.throwingUniversalJarInJarFMJParseFailure
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.problems.ProblemGroup
-import org.gradle.api.problems.ProblemId
 import org.gradle.api.problems.Problems
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFile
@@ -32,24 +33,28 @@ abstract class PatchFabricModJsonTask : ResolvedJarConsumerTask() {
 
     @TaskAction
     fun patch() {
-        val jars = getResolvedJars()
+        val jars = readResolvedJars()
 
         val inputFile = inputFabricModJson.get().asFile
 
-        // parse the input file as valid json
-        val fabricModJson = inputFile.reader().use { reader ->
+        // parse the input file as valid json into an order-preserving config so the
+        // patched output keeps the original key ordering
+        val fabricModJson = JsonFormat.newConfig(::LinkedHashMap)
+        inputFile.reader().use { reader ->
             try {
-                JsonFormat.fancyInstance().createParser().parse(reader)
+                JsonFormat.fancyInstance().createParser()
+                    .parse(reader, fabricModJson, ParsingMode.REPLACE)
             } catch (e: ParsingException) {
-                throw problems.reporter.throwing(e, PROBLEM_ID) {
-                    // TODO: improve this
-                    solution("Ensure that the fabric.mod.json file is valid JSON.")
-                }
+                throw problems.reporter.throwingUniversalJarInJarFMJParseFailure(
+                    e, inputFile.absolutePath
+                )
             }
         }
 
+        val existingJars = fabricModJson.get<List<Any>>("jars").orEmpty()
+
         // Patch the fabric.mod.json file to include the embedded jars as "jars" entries.
-        fabricModJson.add("jars", jars.map { jar ->
+        fabricModJson.set<List<Any>>("jars", existingJars + jars.map { jar ->
             fabricModJson.createSubConfig().apply {
                 add("file", jar.path)
             }
@@ -61,13 +66,5 @@ abstract class PatchFabricModJsonTask : ResolvedJarConsumerTask() {
         outputFile.writer().use { writer ->
             JsonFormat.fancyInstance().createWriter().write(fabricModJson, writer)
         }
-    }
-
-    private companion object {
-        val PROBLEM_ID: ProblemId = ProblemId.create(
-            "jarinjar-fabric-mod-json-parse-failure",
-            "Could not parse fabric.mod.json:",
-            ProblemGroup.create("modstitch-multiloader", "Modstitch Multiloader"),
-        )
     }
 }

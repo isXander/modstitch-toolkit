@@ -22,7 +22,7 @@ abstract class GenerateJarJarMetadataTask : ResolvedJarConsumerTask() {
 
     @TaskAction
     fun createMetadata() {
-        val jars = getResolvedJars()
+        val jars = readResolvedJars()
 
         val metadataJson = JsonFormat.newConfig(::LinkedHashMap).apply {
             add("jars", jars.map { jar ->
@@ -49,6 +49,9 @@ abstract class GenerateJarJarMetadataTask : ResolvedJarConsumerTask() {
             .createWriter()
             .writeToString(metadataJson)
 
-        metadataFile.get().asFile.writeText(metadataString)
+        metadataFile.get().asFile.apply {
+            parentFile.mkdirs()
+            writeText(metadataString)
+        }
     }
 }

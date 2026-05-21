@@ -2,19 +2,24 @@
 
 package dev.isxander.mtk.multiloader
 
+import dev.isxander.mtk.multiloader.jarinjar.UniversalJarInJar
 import dev.isxander.mtk.multiloader.neoverification.VerifyCommonNeoforgeOutput
 import dev.isxander.mtk.multiloader.utils.*
 import net.neoforged.gradle.common.tasks.JarJar
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.problems.Problems
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import javax.inject.Inject
 
-class MultiloaderPlugin : Plugin<Project> {
+class MultiloaderPlugin @Inject constructor(
+    private val problems: Problems
+) : Plugin<Project> {
     override fun apply(target: Project) {
         applyPlugins(target)
         setupFeatures(target)
@@ -23,6 +28,7 @@ class MultiloaderPlugin : Plugin<Project> {
         setupCommonNeoforgeVerification(target)
         setupFabricClasspath(target)
         setupNeoforgeClasspath(target)
+        setupFabricJarInJar(target)
         setupNeoforgeJarJar(target)
         if (target.conventionUniversalJar.get()) {
             setupUniversalJar(target)
@@ -302,6 +308,25 @@ class MultiloaderPlugin : Plugin<Project> {
     }
 
     /**
+     * Configures fabric jar-in-jar for the fabric source set.
+     *
+     * - Prevents use of the default `include` configuration.
+     * - Creates a new `fabricInclude` configuration.
+     * - Instructs nest jars in `fabricInclude` into `fabricJar`.
+     */
+    private fun setupFabricJarInJar(target: Project) {
+        target.configurations.named("include") {
+            dependencies.whenObjectAdded {
+                val dependency = this
+                throw problems.reporter.throwingLoomIncludeConfigUsage(dependency.name)
+            }
+        }
+
+        val fabricInclude = target.configurations.dependencyScope("fabricInclude")
+        target.loom.nestJars(target.tasks.named<Jar>("fabricJar"), fabricInclude)
+    }
+
+    /**
      * Configures jarJar for the neoforge source set.
      *
      * - Disables the default jarJar feature targeting the main source set.
@@ -341,7 +366,7 @@ class MultiloaderPlugin : Plugin<Project> {
     private fun setupUniversalJar(target: Project) {
         val sourceSets = target.sourceSets
 
-        target.tasks.register<Jar>("universalJar") {
+        val universalJar = target.tasks.register<Jar>("universalJar") {
             group = "build"
 
             archiveClassifier = "universal"
@@ -351,6 +376,14 @@ class MultiloaderPlugin : Plugin<Project> {
             from(sourceSets.fabric.map { it.output })
             from(sourceSets.neoforge.map { it.output })
         }
+
+        val universalJarInJar = target.objects.newInstance<UniversalJarInJar>()
+        universalJarInJar.setup(
+            target = target,
+            neoforgeSourceSet = sourceSets.neoforge.get(),
+            universalJar = universalJar,
+        )
+
         target.tasks.register<Jar>("universalSourcesJar") {
             group = "build"
 
@@ -363,7 +396,7 @@ class MultiloaderPlugin : Plugin<Project> {
         }
 
         target.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
-            dependsOn("universalJar", "universalSourcesJar")
+            dependsOn("fatUniversalJar", "universalSourcesJar")
         }
     }
 
