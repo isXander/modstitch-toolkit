@@ -2,23 +2,37 @@ import dev.isxander.mtk.manifests.spec.ModManifestSpec.DependencyType
 
 plugins {
     java
-    id("net.fabricmc.fabric-loom") version "1.16-SNAPSHOT"
-    id("dev.isxander.mtk.commonconf")
+    id("net.fabricmc.fabric-loom") version "1.17.local" apply false
+    id("net.neoforged.gradle.userdev") version "7.1.27" apply false
     id("dev.isxander.mtk.manifests")
+    id("dev.isxander.mtk.multiloader")
 }
 
 group = "dev.isxander"
 version = "1.0.0"
 
-commonconf {
-    minecraftVersion = "26.1.2"
-    loaderVersion = "0.19.2"
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
 
-    runs {
-        register("client") {
-            client()
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    minecraft("com.mojang:minecraft:26.1.2")
+    fabricLoader("net.fabricmc:fabric-loader:0.19.2")
+    neoforgeImplementation("net.neoforged:neoforge:26.1.2.50-beta")
+
+    add("commonInclude", "org.slf4j:slf4j-api") {
+        version {
+            strictly("[2.0,3.0)")
+            prefer("2.0.17")
         }
     }
+    add("universalOnlyInclude", "org.jetbrains:annotations:26.0.2")
 }
 
 manifests {
@@ -36,7 +50,7 @@ manifests {
 
         mixin("example_mod.mixins.json")
     }
-    fabricModJson(sourceSets.main.get()) {
+    fabricModJson(sourceSets.fabric.get()) {
         from(common)
 
         entrypoint("client", "com.example.ExampleModClient")
@@ -45,7 +59,7 @@ manifests {
 
         depends("fabric-api", mavenRange("[0.89,)"))
     }
-    neoForgeModsToml(sourceSets.main.get()) {
+    neoForgeModsToml(sourceSets.neoforge.get()) {
         from(common)
 
         mixin("example_mod.neoforge.mixins.json")

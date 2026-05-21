@@ -11,14 +11,10 @@ val libs = the<LibrariesForLibs>()
 group = "dev.isxander"
 
 repositories {
+    mavenLocal()
     mavenCentral()
     gradlePluginPortal()
-    exclusiveContent {
-        forRepository { maven("https://maven.fabricmc.net") }
-        filter {
-            includeGroupAndSubgroups("net.fabricmc")
-        }
-    }
+    maven("https://maven.fabricmc.net")
     maven("https://maven.neoforged.net/releases")
 }
 

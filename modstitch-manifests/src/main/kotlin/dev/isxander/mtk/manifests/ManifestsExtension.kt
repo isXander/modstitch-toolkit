@@ -81,6 +81,7 @@ abstract class ManifestsExtension @Inject constructor(
         val taskName = sourceSet.getTaskName("generate", "FabricModJson")
         val outputDir = project.layout.buildDirectory.dir("generated/manifests/${sourceSet.name}/fabric")
         val task = project.tasks.register<FabricModJsonGenerateTask>(taskName) {
+            group = "modstitch/manifests"
             spec.set(fmjSpec)
             outputFile.set(outputDir.map { it.file("fabric.mod.json") })
         }
@@ -115,6 +116,7 @@ abstract class ManifestsExtension @Inject constructor(
         val taskName = sourceSet.getTaskName("generate", "NeoForgeModsToml")
         val outputDir = project.layout.buildDirectory.dir("generated/manifests/${sourceSet.name}/neoforge")
         val task = project.tasks.register<NeoForgeModsTomlGenerateTask>(taskName) {
+            group = "modstitch/manifests"
             spec.set(nmtSpec)
             outputFile.set(outputDir.map { it.file("META-INF/neoforge.mods.toml") })
         }
