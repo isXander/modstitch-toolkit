@@ -4,16 +4,14 @@ import net.neoforged.gradle.userdev.UserDevProjectPlugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ModuleDependency
-import org.gradle.api.attributes.Bundling
-import org.gradle.api.attributes.Category
-import org.gradle.api.attributes.HasConfigurableAttributes
-import org.gradle.api.attributes.LibraryElements
-import org.gradle.api.attributes.Usage
+import org.gradle.api.attributes.*
 import org.gradle.api.file.ArchiveOperations
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.jvm.tasks.Jar
-import org.gradle.kotlin.dsl.*
+import org.gradle.kotlin.dsl.assign
+import org.gradle.kotlin.dsl.invoke
+import org.gradle.kotlin.dsl.register
 import javax.inject.Inject
 
 abstract class UniversalJarInJar @Inject constructor(

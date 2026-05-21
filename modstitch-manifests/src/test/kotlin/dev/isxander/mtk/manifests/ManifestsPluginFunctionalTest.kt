@@ -1,10 +1,11 @@
 package dev.isxander.mtk.manifests
 
 import org.gradle.testkit.runner.GradleRunner
-import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.io.TempDir
+import tools.jackson.dataformat.toml.TomlMapper
 import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ManifestsPluginFunctionalTest {
@@ -52,6 +53,8 @@ class ManifestsPluginFunctionalTest {
         assertTrue(fabricManifest.isFile)
         assertTrue(neoForgeManifest.isFile)
         assertTrue(fabricManifest.readText().contains(""""depends""""))
-        assertTrue(neoForgeManifest.readText().contains("""[[dependencies.example]]"""))
+        val neoForgeText = neoForgeManifest.readText()
+        val neoForgeTree = TomlMapper().readTree(neoForgeText)
+        assertEquals("minecraft", neoForgeTree.path("dependencies").path("example")[0].path("modId").asString())
     }
 }

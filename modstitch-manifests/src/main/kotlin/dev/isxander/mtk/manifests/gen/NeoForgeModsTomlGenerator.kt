@@ -1,11 +1,13 @@
 package dev.isxander.mtk.manifests.gen
 
-import com.electronwill.nightconfig.toml.TomlFormat
 import dev.isxander.mtk.manifests.spec.ModManifestSpec.DependencyType
 import dev.isxander.mtk.manifests.spec.ModManifestSpec.Side
 import dev.isxander.mtk.manifests.spec.NeoForgeModsTomlSpec
+import tools.jackson.dataformat.toml.TomlMapper
 
 internal object NeoForgeModsTomlGenerator : ManifestGenerator<NeoForgeModsTomlSpec> {
+    private val tomlMapper = TomlMapper()
+
     override fun generate(spec: NeoForgeModsTomlSpec): String {
         val config = orderedTomlConfig().apply {
             // Non-Mod-Specific Properties
@@ -92,6 +94,6 @@ internal object NeoForgeModsTomlGenerator : ManifestGenerator<NeoForgeModsTomlSp
                 ?.let { add("mixins", it) }
         }
 
-        return TomlFormat.instance().createWriter().writeToString(config)
+        return tomlMapper.writeValueAsString(config)
     }
 }

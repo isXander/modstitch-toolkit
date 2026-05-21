@@ -10,8 +10,8 @@ dependencies {
     // For ConvertAccessxTask wiring on FMJ/NMT specs.
     api(project(":modstitch-accessx"))
 
-    api(libs.night.config.json)
-    api(libs.night.config.toml)
+    implementation(libs.jackson.databind)
+    implementation(libs.jackson.dataformat.toml)
 }
 
 gradlePlugin {

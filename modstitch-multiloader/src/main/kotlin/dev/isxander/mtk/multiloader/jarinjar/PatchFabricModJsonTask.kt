@@ -1,18 +1,12 @@
 package dev.isxander.mtk.multiloader.jarinjar
 
-import com.electronwill.nightconfig.core.io.ParsingException
-import com.electronwill.nightconfig.core.io.ParsingMode
-import com.electronwill.nightconfig.json.JsonFormat
-import dev.isxander.mtk.multiloader.utils.ModstitchProblems
 import dev.isxander.mtk.multiloader.utils.throwingUniversalJarInJarFMJParseFailure
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.problems.Problems
-import org.gradle.api.tasks.CacheableTask
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.PathSensitive
-import org.gradle.api.tasks.PathSensitivity
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
+import tools.jackson.core.JacksonException
+import tools.jackson.databind.node.ArrayNode
+import tools.jackson.databind.node.ObjectNode
 import javax.inject.Inject
 
 /**
@@ -37,34 +31,35 @@ abstract class PatchFabricModJsonTask : ResolvedJarConsumerTask() {
 
         val inputFile = inputFabricModJson.get().asFile
 
-        // parse the input file as valid json into an order-preserving config so the
+        // Parse the input file as valid JSON into an order-preserving tree so the
         // patched output keeps the original key ordering
-        val fabricModJson = JsonFormat.newConfig(::LinkedHashMap)
-        inputFile.reader().use { reader ->
-            try {
-                JsonFormat.fancyInstance().createParser()
-                    .parse(reader, fabricModJson, ParsingMode.REPLACE)
-            } catch (e: ParsingException) {
-                throw problems.reporter.throwingUniversalJarInJarFMJParseFailure(
-                    e, inputFile.absolutePath
-                )
+        val fabricModJson = try {
+            inputFile.reader().use { reader ->
+                jarInJarJsonMapper.readTree(reader) as? ObjectNode
+                    ?: throw IllegalArgumentException("fabric.mod.json root must be a JSON object.")
             }
+        } catch (e: JacksonException) {
+            throw problems.reporter.throwingUniversalJarInJarFMJParseFailure(
+                e, inputFile.absolutePath
+            )
+        } catch (e: IllegalArgumentException) {
+            throw problems.reporter.throwingUniversalJarInJarFMJParseFailure(
+                e, inputFile.absolutePath
+            )
         }
 
-        val existingJars = fabricModJson.get<List<Any>>("jars").orEmpty()
-
         // Patch the fabric.mod.json file to include the embedded jars as "jars" entries.
-        fabricModJson.set<List<Any>>("jars", existingJars + jars.map { jar ->
-            fabricModJson.createSubConfig().apply {
-                add("file", jar.path)
-            }
-        })
+        val fabricJars = fabricModJson.get("jars") as? ArrayNode
+            ?: fabricModJson.putArray("jars")
+        jars.forEach { jar ->
+            fabricJars.addObject().put("file", jar.path)
+        }
 
         // write the patched fabric.mod.json file to the output file
         val outputFile = outputFabricModJson.get().asFile
         outputFile.parentFile.mkdirs()
         outputFile.writer().use { writer ->
-            JsonFormat.fancyInstance().createWriter().write(fabricModJson, writer)
+            jarInJarJsonMapper.writerWithDefaultPrettyPrinter().writeValue(writer, fabricModJson)
         }
     }
 }

@@ -3,7 +3,6 @@ package dev.isxander.mtk.multiloader.utils
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import kotlin.properties.ReadOnlyProperty
-import kotlin.text.toBoolean
 
 private fun convention(default: Boolean? = null) = ReadOnlyProperty<Project, Provider<Boolean>> { project, prop ->
     val conventionName = prop.name.removePrefix("convention").replaceFirstChar { it.lowercase() }

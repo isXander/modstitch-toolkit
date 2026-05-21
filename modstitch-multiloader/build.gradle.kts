@@ -10,7 +10,7 @@ dependencies {
     compileOnly(libs.plugins.fabric.loom.asDependency())
     compileOnly(libs.plugins.neogradle.asDependency())
 
-    implementation(libs.night.config.json)
+    implementation(libs.jackson.databind)
 }
 
 gradlePlugin {

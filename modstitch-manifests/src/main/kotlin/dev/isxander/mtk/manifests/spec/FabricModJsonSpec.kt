@@ -7,7 +7,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.kotlin.dsl.*
+import org.gradle.kotlin.dsl.assign
 
 /**
  * Models a `fabric.mod.json` v1 manifest.
@@ -48,7 +48,7 @@ abstract class FabricModJsonSpec : ModManifestSpec() {
     abstract val languageAdapters: MapProperty<String, String>
 
     /**
-     * Free-form custom data, encoded to JSON via Night Config.
+     * Free-form custom data, encoded to JSON via Jackson.
      *
      * Values must be `java.io.Serializable` (primitives, strings, lists, and
      * maps thereof) so the task input can be fingerprinted and survive the

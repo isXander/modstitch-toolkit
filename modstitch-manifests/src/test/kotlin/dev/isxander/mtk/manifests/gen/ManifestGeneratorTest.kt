@@ -1,18 +1,20 @@
 package dev.isxander.mtk.manifests.gen
 
-import com.electronwill.nightconfig.core.Config
-import com.electronwill.nightconfig.json.JsonFormat
-import com.electronwill.nightconfig.toml.TomlFormat
 import dev.isxander.mtk.manifests.spec.FabricModJsonSpec
 import dev.isxander.mtk.manifests.spec.ModManifestSpec.DependencyType
 import dev.isxander.mtk.manifests.spec.ModManifestSpec.Side
 import dev.isxander.mtk.manifests.spec.NeoForgeModsTomlSpec
 import dev.isxander.mtk.manifests.spec.VersionRange
 import org.gradle.testfixtures.ProjectBuilder
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.dataformat.toml.TomlMapper
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ManifestGeneratorTest {
+    private val jsonMapper = JsonMapper.builder().build()
+    private val tomlMapper = TomlMapper()
+
     @Test
     fun `fabric generator emits common metadata entrypoints mixins contacts and dependency buckets`() {
         val spec = ProjectBuilder.builder().build().objects.newInstance(FabricModJsonSpec::class.java).apply {
@@ -42,10 +44,10 @@ class ManifestGeneratorTest {
 
         val expectedText = resourceText("fabric.mod.json")
         val actualText = FabricModJsonGenerator.generate(spec)
-        val expected = JsonFormat.fancyInstance().createParser().parse(expectedText.reader())
-        val actual = JsonFormat.fancyInstance().createParser().parse(actualText.reader())
+        val expected = jsonMapper.readTree(expectedText)
+        val actual = jsonMapper.readTree(actualText)
 
-        assertEquals(normalize(expected), normalize(actual))
+        assertEquals(expected, actual)
         assertEquals(topLevelJsonKeys(expectedText), topLevelJsonKeys(actualText))
     }
 
@@ -77,24 +79,16 @@ class ManifestGeneratorTest {
 
         val expectedText = resourceText("neoforge.mods.toml")
         val actualText = NeoForgeModsTomlGenerator.generate(spec)
-        val expected = TomlFormat.instance().createParser().parse(expectedText.reader())
-        val actual = TomlFormat.instance().createParser().parse(actualText.reader())
+        val expected = tomlMapper.readTree(expectedText)
+        val actual = tomlMapper.readTree(actualText)
 
-        assertEquals(normalize(expected), normalize(actual))
+        assertEquals(expected, actual)
     }
 
     private fun resourceText(name: String): String =
         requireNotNull(javaClass.getResource("/dev/isxander/mtk/manifests/gen/$name")) {
             "Missing test resource $name"
         }.readText()
-
-    private fun normalize(value: Any?): Any? =
-        when (value) {
-            is Config -> value.entrySet().associate { entry -> entry.key to normalize(entry.getRawValue<Any?>()) }
-            is Map<*, *> -> value.entries.associate { (k, v) -> k.toString() to normalize(v) }
-            is List<*> -> value.map(::normalize)
-            else -> value
-        }
 
     private fun topLevelJsonKeys(json: String): List<String> {
         val keys = mutableListOf<String>()

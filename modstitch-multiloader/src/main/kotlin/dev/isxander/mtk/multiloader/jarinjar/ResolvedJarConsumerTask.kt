@@ -1,15 +1,9 @@
 package dev.isxander.mtk.multiloader.jarinjar
 
-import com.electronwill.nightconfig.core.Config
-import com.electronwill.nightconfig.json.JsonFormat
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.PathSensitive
-import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.*
 import org.gradle.work.DisableCachingByDefault
 
 @DisableCachingByDefault(because = "Abstract super-class, not to be instantiated directly")
@@ -31,17 +25,19 @@ abstract class ResolvedJarConsumerTask : DefaultTask() {
 
         if (resolvedJarsFile.isPresent) {
             val resolvedJarsMetadata = resolvedJarsFile.get().asFile.reader().use { reader ->
-                JsonFormat.fancyInstance().createParser().parse(reader)
+                jarInJarJsonMapper.readTree(reader)
             }
 
-            jars += resolvedJarsMetadata.get<List<Config>>("jars").orEmpty().map { jar ->
+            jars += resolvedJarsMetadata.path("jars").map { jar ->
                 ResolvedEmbeddedJar(
-                    path = jar.get("path"),
-                    group = jar.get("group"),
-                    artifact = jar.get("artifact"),
-                    classifier = jar.get("classifier"),
-                    version = jar.get("version"),
-                    mavenVersionRange = jar.get("mavenVersionRange"),
+                    path = jar.path("path").asString(),
+                    group = jar.path("group").asString(),
+                    artifact = jar.path("artifact").asString(),
+                    classifier = jar.path("classifier")
+                        .takeUnless { it.isMissingNode || it.isNull }
+                        ?.asString(),
+                    version = jar.path("version").asString(),
+                    mavenVersionRange = jar.path("mavenVersionRange").asString(),
                 )
             }
         }

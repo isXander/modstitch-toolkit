@@ -8,11 +8,7 @@ import org.gradle.api.problems.ProblemGroup
 import org.gradle.api.problems.ProblemId
 import org.gradle.api.problems.Problems
 import org.gradle.api.problems.Severity
-import org.gradle.api.tasks.CacheableTask
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.PathSensitive
-import org.gradle.api.tasks.PathSensitivity
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import java.io.File
 import java.nio.file.Files
 import javax.inject.Inject

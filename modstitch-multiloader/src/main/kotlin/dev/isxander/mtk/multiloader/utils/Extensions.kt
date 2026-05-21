@@ -10,7 +10,7 @@ import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
-import org.gradle.kotlin.dsl.*
+import org.gradle.kotlin.dsl.getByType
 
 val Project.java
     get() = extensions.getByType<JavaPluginExtension>()

@@ -1,12 +1,14 @@
 package dev.isxander.mtk.manifests.gen
 
-import com.electronwill.nightconfig.json.JsonFormat
 import dev.isxander.mtk.manifests.spec.FabricModJsonSpec
 import dev.isxander.mtk.manifests.spec.ModManifestSpec.DependencyType
 import dev.isxander.mtk.manifests.spec.ModManifestSpec.Side
+import tools.jackson.databind.json.JsonMapper
 
 internal object FabricModJsonGenerator : ManifestGenerator<FabricModJsonSpec> {
     const val SCHEMA_VERSION: Int = 1
+
+    private val jsonMapper = JsonMapper.builder().build()
 
     override fun generate(spec: FabricModJsonSpec): String {
         val config = orderedJsonConfig().apply {
@@ -100,6 +102,6 @@ internal object FabricModJsonGenerator : ManifestGenerator<FabricModJsonSpec> {
             addMapProperty("custom", spec.customData)
         }
 
-        return JsonFormat.fancyInstance().createWriter().writeToString(config)
+        return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(config)
     }
 }

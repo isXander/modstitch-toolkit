@@ -1,6 +1,5 @@
 package dev.isxander.mtk.multiloader.jarinjar
 
-import com.electronwill.nightconfig.json.JsonFormat
 import dev.isxander.mtk.multiloader.utils.throwingUniversalJarInJarDuplicatePath
 import dev.isxander.mtk.multiloader.utils.throwingUniversalJarInJarMissingCoordinates
 import org.gradle.api.DefaultTask
@@ -21,19 +20,11 @@ import org.gradle.api.problems.Problems
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.PathSensitive
-import org.gradle.api.tasks.PathSensitivity
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.gradle.work.DisableCachingByDefault
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Files
-import java.util.LinkedHashMap
 import javax.inject.Inject
 
 /**
@@ -273,21 +264,23 @@ abstract class ResolveJarsTask : DefaultTask() {
         val metadataFile = resolvedJarsFile.get().asFile
         metadataFile.parentFile.mkdirs()
 
-        val json = JsonFormat.newConfig(::LinkedHashMap).apply {
-            add("jars", jars.map { jar ->
-                createSubConfig().apply {
-                    add("path", jar.path)
-                    add("group", jar.group)
-                    add("artifact", jar.artifact)
-                    jar.classifier?.let { add("classifier", it) }
-                    add("version", jar.version)
-                    add("mavenVersionRange", jar.mavenVersionRange)
+        val json = jarInJarJsonMapper.createObjectNode().apply {
+            putArray("jars").apply {
+                jars.forEach { jar ->
+                    addObject().apply {
+                        put("path", jar.path)
+                        put("group", jar.group)
+                        put("artifact", jar.artifact)
+                        jar.classifier?.let { put("classifier", it) }
+                        put("version", jar.version)
+                        put("mavenVersionRange", jar.mavenVersionRange)
+                    }
                 }
-            })
+            }
         }
 
         metadataFile.writer().use { writer ->
-            JsonFormat.fancyInstance().createWriter().write(json, writer)
+            jarInJarJsonMapper.writerWithDefaultPrettyPrinter().writeValue(writer, json)
         }
     }
 
@@ -307,17 +300,15 @@ abstract class ResolveJarsTask : DefaultTask() {
     }
 
     private fun ResolvedEmbeddedJar.generatedFabricModJson(): String {
-        val json = JsonFormat.newConfig(::LinkedHashMap).apply {
-            add("schemaVersion", 1)
-            add("id", fabricModId)
-            add("version", fabricVersion)
-            add("name", artifact)
-            add("custom", createSubConfig().apply {
-                add("fabric-loom:generated", true)
-            })
+        val json = jarInJarJsonMapper.createObjectNode().apply {
+            put("schemaVersion", 1)
+            put("id", fabricModId)
+            put("version", fabricVersion)
+            put("name", artifact)
+            putObject("custom").put("fabric-loom:generated", true)
         }
 
-        return JsonFormat.fancyInstance().createWriter().writeToString(json)
+        return jarInJarJsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json)
     }
 
     private fun embeddedPath(fileName: String): String =

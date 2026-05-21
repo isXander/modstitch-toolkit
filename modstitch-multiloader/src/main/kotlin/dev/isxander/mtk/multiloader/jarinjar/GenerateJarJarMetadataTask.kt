@@ -1,11 +1,9 @@
 package dev.isxander.mtk.multiloader.jarinjar
 
-import com.electronwill.nightconfig.json.JsonFormat
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import java.util.LinkedHashMap
 
 /**
  * Generates the NeoForge-required `META-INF/jarjar/metadata.json`
@@ -24,30 +22,31 @@ abstract class GenerateJarJarMetadataTask : ResolvedJarConsumerTask() {
     fun createMetadata() {
         val jars = readResolvedJars()
 
-        val metadataJson = JsonFormat.newConfig(::LinkedHashMap).apply {
-            add("jars", jars.map { jar ->
-                createSubConfig().apply {
-                    add("identifier", createSubConfig().apply {
-                        add("group", jar.group)
-                        add("artifact", jar.artifact)
-                    })
+        val metadataJson = jarInJarJsonMapper.createObjectNode().apply {
+            putArray("jars").apply {
+                jars.forEach { jar ->
+                    addObject().apply {
+                        putObject("identifier").apply {
+                            put("group", jar.group)
+                            put("artifact", jar.artifact)
+                        }
 
-                    add("version", createSubConfig().apply {
-                        add("range", jar.mavenVersionRange)
-                        add("artifactVersion", jar.version)
-                    })
+                        putObject("version").apply {
+                            put("range", jar.mavenVersionRange)
+                            put("artifactVersion", jar.version)
+                        }
 
-                    add("path", jar.path)
-                    // TODO: investigate if we can easily support obfuscation (doubt)
-                    add("isObfuscated", false)
+                        put("path", jar.path)
+                        // TODO: investigate if we can easily support obfuscation (doubt)
+                        put("isObfuscated", false)
+                    }
                 }
-            })
+            }
         }
 
-        val metadataString = JsonFormat
-            .fancyInstance()
-            .createWriter()
-            .writeToString(metadataJson)
+        val metadataString = jarInJarJsonMapper
+            .writerWithDefaultPrettyPrinter()
+            .writeValueAsString(metadataJson)
 
         metadataFile.get().asFile.apply {
             parentFile.mkdirs()
