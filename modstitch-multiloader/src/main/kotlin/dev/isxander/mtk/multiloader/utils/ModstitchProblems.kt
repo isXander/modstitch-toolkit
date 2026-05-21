@@ -7,7 +7,6 @@ import org.gradle.api.problems.ProblemGroup
 import org.gradle.api.problems.ProblemId
 import org.gradle.api.problems.ProblemReporter
 import org.gradle.api.problems.Severity
-import org.gradle.internal.configuration.problems.taskPathFrom
 
 object ModstitchProblems {
     val GROUP = ProblemGroup.create("modstitch-multiloader", "Modstitch Multiloader")
@@ -51,8 +50,9 @@ fun ProblemReporter.throwingUniversalJarInJarFMJParseFailure(
         )
     }
 
-fun ProblemReporter.throwingLoomIncludeConfigUsage(dependencyName: String) =
-    throwing(
+fun ProblemReporter.throwingLoomIncludeConfigUsage(
+    dependencyName: String
+) = throwing(
         GradleException(
             "Do not use Loom's 'include' configuration with modstitch-multiloader.",
         ),
