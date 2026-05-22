@@ -27,19 +27,26 @@ internal object FabricModJsonGenerator : ManifestGenerator<FabricModJsonSpec> {
                 Side.SERVER -> "server"
             } })
 
+            val entrypoints = linkedMapOf<String, MutableList<Any>>()
             spec.entrypoints.getOrElse(emptyList()).forEach { entrypoint ->
                 val entrypointName = entrypoint.entrypoint.get()
                 val entrypointValue = entrypoint.value.get()
                 val entrypointAdapter = entrypoint.adapter.orNull
-
-                if (entrypointAdapter == null) {
+                val entrypointConfig = if (entrypointAdapter == null) {
                     // use string shorthand if no adapter is specified
-                    add("entrypoints.$entrypointName", entrypointValue)
+                    entrypointValue
                 } else {
                     // use full object form if an adapter is specified
-                    add("entrypoints.$entrypointName.value", entrypointValue)
-                    add("entrypoints.$entrypointName.adapter", entrypointAdapter)
+                    createSubConfig().apply {
+                        add("value", entrypointValue)
+                        add("adapter", entrypointAdapter)
+                    }
                 }
+
+                entrypoints.getOrPut(entrypointName) { mutableListOf() }.add(entrypointConfig)
+            }
+            if (entrypoints.isNotEmpty()) {
+                addMap("entrypoints", entrypoints)
             }
 
             add("mixins", spec.mixins.getOrElse(emptyList()).map { mixin ->

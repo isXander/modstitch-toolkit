@@ -30,6 +30,7 @@ class ManifestGeneratorTest {
             iconPath.set("assets/example/icon.png")
             client()
             entrypoint("main", "example.Main")
+            entrypoint("main", "example.OtherMain")
             entrypoint("client", "example.Client", "kotlin")
             mixin("example.mixins.json")
             mixin("example.client.mixins.json", Side.CLIENT)

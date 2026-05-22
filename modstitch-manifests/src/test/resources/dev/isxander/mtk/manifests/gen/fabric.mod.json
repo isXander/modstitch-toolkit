@@ -4,11 +4,16 @@
   "version": "1.2.3",
   "environment": "client",
   "entrypoints": {
-    "main": "example.Main",
-    "client": {
-      "value": "example.Client",
-      "adapter": "kotlin"
-    }
+    "main": [
+      "example.Main",
+      "example.OtherMain"
+    ],
+    "client": [
+      {
+        "value": "example.Client",
+        "adapter": "kotlin"
+      }
+    ]
   },
   "mixins": [
     "example.mixins.json",
