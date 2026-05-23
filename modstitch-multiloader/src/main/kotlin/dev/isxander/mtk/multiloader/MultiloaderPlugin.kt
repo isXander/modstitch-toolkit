@@ -24,10 +24,10 @@ class MultiloaderPlugin @Inject constructor(
         applyPlugins(target)
         setupFeatures(target)
         setupCommonConfigurations(target)
-        setupCommonSources(target)
-        setupCommonNeoforgeVerification(target)
         setupFabricClasspath(target)
         setupNeoforgeClasspath(target)
+        setupCommonSources(target)
+        setupCommonNeoforgeVerification(target)
         setupFabricJarInJar(target)
         setupNeoforgeJarJar(target)
         if (target.conventionUniversalJar.get()) {
@@ -172,11 +172,11 @@ class MultiloaderPlugin @Inject constructor(
     }
 
     /**
-     * Configures the fabric and neoforge source set directories to include common
+     * Configures the fabric and neoforge source sets to include common output.
      *
-     * - Sources `src/main/java` to `src/<SourceSet>/java`
-     * - Sources `src/main/resources` to `src/<SourceSet>/resources`
-     * - Sources `src/main/kotlin` to `src/<SourceSet>/kotlin` (if kotlin is enabled)
+     * - Adds the main source set output to each loader source set's compile classpath
+     * - Adds the main source set output to each loader source set's runtime classpath
+     * - Bundles main output into loader jars
      */
     private fun setupCommonSources(target: Project) {
         val sourceSets = target.sourceSets
@@ -185,9 +185,10 @@ class MultiloaderPlugin @Inject constructor(
         val fabric = sourceSets.fabric.get()
         val neoforge = sourceSets.neoforge.get()
 
-        fun configureSourceSet(sourceSet: SourceSet) {
+        fun configureSourceSet(sourceSet: SourceSet, localRuntimeName: String) {
             target.dependencies {
                 sourceSet.compileOnlyConfigurationName(main.output)
+                localRuntimeName(main.output)
             }
 
             target.tasks {
@@ -204,8 +205,8 @@ class MultiloaderPlugin @Inject constructor(
             }
         }
 
-        configureSourceSet(fabric)
-        configureSourceSet(neoforge)
+        configureSourceSet(fabric, "fabricLocalRuntime")
+        configureSourceSet(neoforge, "neoforgeLocalRuntime")
     }
 
     /**
@@ -262,18 +263,29 @@ class MultiloaderPlugin @Inject constructor(
      * Configures the fabric source set to use the Loom-provided Minecraft classpath.
      *
      * - Extends the fabric source set's compile/runtime classpath with the Minecraft classpath
+     * - Sets up `fabricLocalRuntime` configuration
+     * - Removes the Loom-created `localRuntime` configuration
      *
      * @see setupCommonSources
      */
     private fun setupFabricClasspath(target: Project) {
+        val main = target.sourceSets.main.get()
+        val fabric = target.sourceSets.fabric.get()
+
         target.configurations {
-            target.loom
             // The `main` source set *needs* Fabric Loader in order for Loom to resolve its dependencies such as
             // Mixin and ASM. We make a utility configuration for users to use so they don't need to define it twice.
             // TODO: Somehow prevent fabric-loader.jar being on the main compile classpath, and JUST let Loom resolve its dependencies
             val fabricLoader = register("fabricLoader")
-            named(target.sourceSets.main.get().compileOnlyConfigurationName) { extendsFrom(fabricLoader) }
-            named(target.sourceSets.fabric.get().implementationConfigurationName) { extendsFrom(fabricLoader) }
+            named(main.compileOnlyConfigurationName) { extendsFrom(fabricLoader) }
+            named(fabric.implementationConfigurationName) { extendsFrom(fabricLoader) }
+
+            val fabricLocalRuntime = dependencyScope("fabricLocalRuntime")
+            named(fabric.runtimeClasspathConfigurationName) { extendsFrom(fabricLocalRuntime) }
+
+            // Fabric generates a `localRuntime` configuration,
+            // but this is for the main source set and therefore unwanted.
+            removeIf { it.name == "localRuntime" }
 
             // Loom doesn't create the `minecraftNamed*` until afterEvaluate
             // https://github.com/FabricMC/fabric-loom/blob/cf42ac/src/main/java/net/fabricmc/loom/configuration/providers/minecraft/MinecraftSourceSets.java#L123
@@ -291,10 +303,9 @@ class MultiloaderPlugin @Inject constructor(
     }
 
     /**
-     * Registers a `neoforgeLocalRuntime` configuration and removes the default `localRuntime` configuration.
+     * Registers a `neoforgeLocalRuntime` configuration.
      *
      * - Creates and configures the `neoforgeLocalRuntime` configuration
-     * - Removes the default `localRuntime` configuration
      */
     private fun setupNeoforgeClasspath(target: Project) {
         target.configurations {
@@ -303,10 +314,6 @@ class MultiloaderPlugin @Inject constructor(
             // Create a local runtime configuration scoped for the neoforge source set
             val neoforgeLocalRuntime = dependencyScope("neoforgeLocalRuntime")
             neoforge.runtimeClasspathConfigurationName { extendsFrom(neoforgeLocalRuntime) }
-
-            // NeoGradle generates a `localRuntime` configuration,
-            // but this is for the main source set and therefore unwanted.
-            remove(named("localRuntime").get())
         }
     }
 
@@ -388,7 +395,6 @@ class MultiloaderPlugin @Inject constructor(
         val universalJarInJar = target.objects.newInstance<UniversalJarInJar>()
         universalJarInJar.setup(
             target = target,
-            neoforgeSourceSet = sourceSets.neoforge.get(),
             universalJar = universalJar,
         )
 
@@ -470,6 +476,7 @@ class MultiloaderPlugin @Inject constructor(
             // prevents NeoGradle from making default run configs like Loom
 
             configureEach {
+                val main = target.sourceSets.main.get()
                 val neoforge = target.sourceSets.neoforge.get()
 
                 // All run configs should be for the neoforge source set.

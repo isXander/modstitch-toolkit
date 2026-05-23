@@ -1,6 +1,5 @@
 package dev.isxander.mtk.multiloader.jarinjar
 
-import net.neoforged.gradle.userdev.UserDevProjectPlugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ModuleDependency
@@ -44,7 +43,6 @@ abstract class UniversalJarInJar @Inject constructor(
     // TODO: naming is all over the place; Jar-in-Jar, embedJars, JarJar, pick one.
     fun setup(
         target: Project,
-        neoforgeSourceSet: SourceSet,
         universalJar: TaskProvider<out Jar>,
     ) {
         val universalOnlyIncludeConfig = target.configurations.dependencyScope("universalOnlyInclude")
@@ -58,7 +56,7 @@ abstract class UniversalJarInJar @Inject constructor(
         target.configurations.named("fabricInclude") {
             extendsFrom(commonIncludeConfig)
         }
-        target.configurations.named(UserDevProjectPlugin.JAR_JAR_DEFAULT_CONFIGURATION_NAME prefixedBy neoforgeSourceSet) {
+        target.configurations.named("neoforgeInclude") {
             extendsFrom(commonIncludeConfig)
         }
 
