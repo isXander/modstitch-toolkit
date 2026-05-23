@@ -21,7 +21,7 @@ rootProject.name = "modstitch-toolkit"
 // Keep the playground as a standalone consumer build. It includes this build
 // for plugin substitution; including it back from here creates a composite loop
 // that can leave Gradle/IDE model loading stuck on playground tasks.
-includeBuild("test-playground")
+//includeBuild("test-playground")
 
 include("modstitch-accessx")
 include("modstitch-manifests")
