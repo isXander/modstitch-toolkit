@@ -372,9 +372,9 @@ class MultiloaderPlugin @Inject constructor(
     }
 
     /**
-     * Configures a jar task to create a universal jar that includes all source sets' outputs.
+     * Configures a jar task to create a universal jar that includes all source sets' classes and universal resources.
      *
-     * - Creates a `universalJar` task that includes all source sets' outputs.
+     * - Creates a `universalJar` task that includes all source sets' classes.
      * - Creates a `universalSourcesJar` task that includes all source sets' sources.
      * - Adds these tasks to the `assemble` task.
      */
@@ -387,9 +387,11 @@ class MultiloaderPlugin @Inject constructor(
             archiveClassifier = "universal"
             duplicatesStrategy = DuplicatesStrategy.FAIL
 
-            from(sourceSets.main.map { it.output })
-            from(sourceSets.fabric.map { it.output })
-            from(sourceSets.neoforge.map { it.output })
+            // only add classes dirs so we can do another resource
+            // processing step for Universal JarInJar
+            from(sourceSets.main.map { it.output.classesDirs })
+            from(sourceSets.fabric.map { it.output.classesDirs })
+            from(sourceSets.neoforge.map { it.output.classesDirs })
         }
 
         val universalJarInJar = target.objects.newInstance<UniversalJarInJar>()
@@ -410,7 +412,7 @@ class MultiloaderPlugin @Inject constructor(
         }
 
         target.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
-            dependsOn("fatUniversalJar", "universalSourcesJar")
+            dependsOn("universalJar", "universalSourcesJar")
         }
     }
 

@@ -78,13 +78,13 @@ dependencies {
 This plugin registers and configures a jar that contains common, fabric, and neoforge code.
 This allows for a single distributable jar that can be used for all loaders.
 
-`universalJar` is the slim archive. `fatUniversalJar` is the distributable universal archive
-with universal Jar-in-Jar metadata and embedded jars.
+`universalJar` is the distributable universal archive with universal Jar-in-Jar metadata
+and embedded jars.
 
 #### Example
 
 ```kotlin
-tasks.fatUniversalJar {
+tasks.universalJar {
     // configure the jar here
 }
 tasks.universalSourcesJar {
@@ -93,7 +93,7 @@ tasks.universalSourcesJar {
 
 // example using `me.modmuss50.mod-publish-plugin`
 publishMods {
-    file = tasks.fatUniversalJar.map { it.archiveFile }
+    file = tasks.universalJar.map { it.archiveFile }
     additionalFiles.add(tasks.universalSourcesJar.map { it.archiveFile })
 }
 ```
@@ -149,12 +149,11 @@ dependencies {
 
 ### Jar-in-Jar support
 
-There are four important configurations for jar-in-jar support:
+There are three important configurations for jar-in-jar support:
 
 - `commonInclude`: Jar-in-Jar the same set of dependencies across fabric, neoforge, and universal jars.
-- `fabricInclude`: Jar-in-Jar dependencies only in the fabric jar.
-- `neoforgeInclude`: Jar-in-Jar dependencies only in the neoforge jar
-- `universalOnlyInclude`: Jar-in-Jar dependencies only in the universal jar.
+- `fabricInclude`: Jar-in-Jar dependencies in the fabric jar, and in the universal jar only for Fabric to load.
+- `neoforgeInclude`: Jar-in-Jar dependencies in the neoforge jar, and in the universal jar only for NeoForge to load.
 
 This plugin explicitly supports Jar-in-Jar for universal jars by reimplementing the required logic for both
 mod loaders, meaning that the nested jars are *not* duplicated. 
@@ -164,8 +163,9 @@ modstitch-multiloader automatically edits your `fabric.mod.json` and generates a
 that contains the embedded jar information. Each nested jar gets a generated `fabric.mod.json`, matching
 the behavior of the `fabric-loom` plugin.
 
-The loader-specific jars (namely using `fabricInclude` and `neoforgeInclude`) use their associated
-plugins' built-in Jar-in-Jar support. modstitch-multiloader stays out the way in these cases.
+The loader-specific jars use their associated plugins' built-in Jar-in-Jar support. In the universal
+jar, `fabricInclude` entries are only added to Fabric's `fabric.mod.json` `jars` list, and
+`neoforgeInclude` entries are only added to NeoForge's `META-INF/jarjar/metadata.json`.
 This has the effect that nested jars appear in a slightly different location in the jar; on Fabric, it's
 `META-INF/jars/`, on NeoForge, `META-INF/jarjar/`.
 

@@ -3,6 +3,8 @@ package dev.isxander.mtk.multiloader.jarinjar
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
+import java.util.jar.JarEntry
+import java.util.jar.JarOutputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -108,4 +110,108 @@ class UniversalJarInJarMetadataFunctionalTest {
             },
         )
     }
+
+    @Test
+    fun `resolve jars task separates fabric and neoforge load metadata`() {
+        projectDir.resolve("settings.gradle.kts").writeText(
+            """rootProject.name = "universal-jar-in-jar-split-fixture""""
+        )
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("dev.isxander.mtk.multiloader") apply false
+            }
+
+            repositories {
+                maven {
+                    url = uri("repo")
+                }
+            }
+
+            val embedded by configurations.creating
+            val fabricLoad by configurations.creating
+            val neoforgeLoad by configurations.creating
+
+            dependencies {
+                embedded("test:common:1.0.0")
+                embedded("test:fabric-only:1.0.0")
+                embedded("test:neoforge-only:1.0.0")
+
+                fabricLoad("test:common:1.0.0")
+                fabricLoad("test:fabric-only:1.0.0")
+
+                neoforgeLoad("test:common:1.0.0")
+                neoforgeLoad("test:neoforge-only:1.0.0")
+            }
+
+            tasks.register<dev.isxander.mtk.multiloader.jarinjar.ResolveJarsTask>("resolveSplitJars") {
+                embeddedFrom(embedded)
+                fabricFrom(fabricLoad)
+                neoforgeFrom(neoforgeLoad)
+                outputDirectory.set(layout.buildDirectory.dir("embedded"))
+                fabricResolvedJarsFile.set(layout.buildDirectory.file("fabric-resolved-jars.json"))
+                neoforgeResolvedJarsFile.set(layout.buildDirectory.file("neoforge-resolved-jars.json"))
+            }
+            """.trimIndent()
+        )
+        listOf("common", "fabric-only", "neoforge-only").forEach { artifact ->
+            publishJar(artifact)
+        }
+
+        GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("resolveSplitJars", "--stacktrace")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(
+            listOf(
+                "common-1.0.0.jar",
+                "fabric-only-1.0.0.jar",
+                "neoforge-only-1.0.0.jar",
+            ),
+            projectDir.resolve("build/embedded/META-INF/embeddedJars")
+                .listFiles()
+                .orEmpty()
+                .map(File::getName)
+                .sorted(),
+        )
+        assertEquals(
+            listOf("common", "fabric-only"),
+            resolvedArtifacts(projectDir.resolve("build/fabric-resolved-jars.json")),
+        )
+        assertEquals(
+            listOf("common", "neoforge-only"),
+            resolvedArtifacts(projectDir.resolve("build/neoforge-resolved-jars.json")),
+        )
+    }
+
+    private fun publishJar(artifact: String) {
+        val artifactDir = projectDir.resolve("repo/test/$artifact/1.0.0").apply {
+            mkdirs()
+        }
+        artifactDir.resolve("$artifact-1.0.0.pom").writeText(
+            """
+            <project>
+              <modelVersion>4.0.0</modelVersion>
+              <groupId>test</groupId>
+              <artifactId>$artifact</artifactId>
+              <version>1.0.0</version>
+            </project>
+            """.trimIndent()
+        )
+        JarOutputStream(artifactDir.resolve("$artifact-1.0.0.jar").outputStream()).use { jar ->
+            jar.putNextEntry(JarEntry("test/$artifact.txt"))
+            jar.write(artifact.toByteArray())
+            jar.closeEntry()
+        }
+    }
+
+    private fun resolvedArtifacts(file: File): List<String> =
+        jarInJarJsonMapper.readTree(file)
+            .path("jars")
+            .values()
+            .asSequence()
+            .map { jar -> jar.path("artifact").stringValue() }
+            .toList()
 }

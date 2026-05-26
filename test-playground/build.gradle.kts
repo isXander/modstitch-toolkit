@@ -32,7 +32,7 @@ dependencies {
             prefer("2.0.17")
         }
     }
-    universalOnlyInclude("org.jetbrains:annotations:26.0.2")
+    fabricInclude("org.jetbrains:annotations:26.0.2")
 }
 
 manifests {

@@ -123,5 +123,4 @@ fun ProblemReporter.throwingLoomIncludeConfigUsage(
         solution("Use 'commonInclude' to include the dependency for all loaders.")
         solution("Use 'fabricInclude' to include the dependency only for Fabric.")
         solution("Use 'neoforgeInclude' to include the dependency only for NeoForge.")
-        solution("Use 'universalOnlyInclude' to include the dependency only in the universal jar.")
     }

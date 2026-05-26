@@ -2,6 +2,7 @@ package dev.isxander.mtk.multiloader.jarinjar
 
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Optional
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.util.*
@@ -18,6 +19,7 @@ open class ResolvedEmbeddedJar(
     val artifact: String,
 
     @get:Input
+    @get:Optional
     val classifier: String?,
 
     @get:Input
