@@ -49,6 +49,8 @@ abstract class UniversalJarInJar @Inject constructor() {
         )
 
         val resolveJarsTask = target.tasks.register<ResolveJarsTask>("resolveEmbeddedJarsJars") {
+            group = "modstitch/multiloader"
+
             embeddedFrom(embeddedInternalConfig)
             fabricFrom(fabricMetadataInternalConfig)
             neoforgeFrom(neoforgeMetadataInternalConfig)
@@ -60,6 +62,8 @@ abstract class UniversalJarInJar @Inject constructor() {
         }
 
         val generateJarJarMetadataTask = target.tasks.register<GenerateJarJarMetadataTask>("generateJarJarMetadata") {
+            group = "modstitch/multiloader"
+
             resolvedJarsFile = resolveJarsTask.flatMap { it.neoforgeResolvedJarsFile }
             metadataFile = target.layout.buildDirectory.file("modstitch-multiloader/embedjars/metadata.json")
         }
@@ -75,6 +79,8 @@ abstract class UniversalJarInJar @Inject constructor() {
         )
 
         val patchFabricModJsonTask = target.tasks.register<PatchFabricModJsonTask>("patchFabricModJson") {
+            group = "modstitch/multiloader"
+
             resolvedJarsFile = resolveJarsTask.flatMap { it.fabricResolvedJarsFile }
 
             inputFabricModJson = fabricModJson
@@ -83,6 +89,8 @@ abstract class UniversalJarInJar @Inject constructor() {
         }
 
         val processUniversalResources = target.tasks.register<ProcessResources>("processUniversalResources") {
+            group = "modstitch/multiloader"
+
             duplicatesStrategy = DuplicatesStrategy.FAIL
             destinationDir = target.layout.buildDirectory.dir("modstitch-multiloader/universal-resources").get().asFile
 
@@ -132,12 +140,6 @@ abstract class UniversalJarInJar @Inject constructor() {
             attribute(Category.CATEGORY_ATTRIBUTE, target.objects.named(Category::class.java, Category.LIBRARY))
             attribute(Bundling.BUNDLING_ATTRIBUTE, target.objects.named(Bundling::class.java, Bundling.EXTERNAL))
         }
-    }
-
-    private infix fun String.prefixedBy(sourceSet: SourceSet): String {
-        val suffix = this
-        if (sourceSet.name == SourceSet.MAIN_SOURCE_SET_NAME) return suffix
-        return "${sourceSet.name}${suffix.replaceFirstChar { it.titlecaseChar() }}"
     }
 
     private val Dependency.isPlatformDependency: Boolean
