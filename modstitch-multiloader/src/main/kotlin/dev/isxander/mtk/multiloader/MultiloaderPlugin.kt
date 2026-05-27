@@ -5,9 +5,12 @@ package dev.isxander.mtk.multiloader
 import dev.isxander.mtk.multiloader.jarinjar.UniversalJarInJar
 import dev.isxander.mtk.multiloader.neoverification.VerifyCommonNeoforgeOutput
 import dev.isxander.mtk.multiloader.utils.*
+import net.fabricmc.loom.task.ManifestModificationAction
+import net.fabricmc.loom.task.service.JarManifestService
 import net.neoforged.gradle.common.tasks.JarJar
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.problems.Problems
 import org.gradle.api.tasks.SourceSet
@@ -34,6 +37,7 @@ class MultiloaderPlugin @Inject constructor(
             setupUniversalJar(target)
         }
         setupJarDepends(target)
+        setupLoomManifests(target)
         setupFabricRunConfigs(target)
         setupNeoforgeRunConfigs(target)
         setupClasspathAttributes(target)
@@ -415,6 +419,27 @@ class MultiloaderPlugin @Inject constructor(
 
         target.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
             dependsOn("universalJar", "universalSourcesJar")
+        }
+    }
+
+    private fun setupLoomManifests(target: Project) {
+        val manifestServiceProvider = JarManifestService.get(target)
+
+        fun Task.setupManifestService() {
+            doLast(ManifestModificationAction(
+                manifestServiceProvider,
+                "official",
+                target.provider { false },
+                target.provider { emptyList() }
+            ))
+            usesService(manifestServiceProvider)
+        }
+
+        target.tasks.named<Jar>("fabricJar") {
+            setupManifestService()
+        }
+        target.tasks.named<Jar>("universalJar") {
+            setupManifestService()
         }
     }
 
