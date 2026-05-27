@@ -13,6 +13,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.kotlin.dsl.withType
 
 /**
  * A Gradle task that converts an accessx file to another format.
@@ -60,9 +61,13 @@ abstract class ConvertAccessxTask : DefaultTask() {
      * }
      * ```
      */
-    fun runBeforeNFRT() {
+    fun runBeforePlugins() {
+        val accessxTask = this
         project.pluginManager.withPlugin("net.neoforged.moddev") {
-            project.tasks.named("createMinecraftArtifacts").configure artifacts@{ this@artifacts.dependsOn(this@ConvertAccessxTask) }
+            project.tasks.named("createMinecraftArtifacts") {
+                val task = this
+                task.dependsOn(this@ConvertAccessxTask)
+            }
         }
     }
 

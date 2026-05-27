@@ -2,6 +2,7 @@ package dev.isxander.mtk.accessx.plugin
 
 import dev.isxander.mtk.accessx.AccessFormat
 import org.gradle.api.Action
+import org.gradle.api.NamedDomainObjectProvider
 import org.gradle.api.Project
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
@@ -45,6 +46,20 @@ abstract class AccessxExtension @Inject constructor(private val project: Project
         convert(name, sourceSet.name, action)
 
     /**
+     * Registers a [ConvertAccessxTask] whose output is bundled into the given [sourceSet]'s resources.
+     *
+     * Behaves identically to [convert(name, action)][convert] but allows targeting a specific
+     * [SourceSet] instance instead of `main`.
+     *
+     * @param name a unique identifier used for the task name and output directory.
+     * @param sourceSet the source set whose resources will receive the generated file.
+     * @param action configuration applied to the registered task.
+     * @return the [TaskProvider] for the registered convert task.
+     */
+    fun convert(name: String, sourceSet: NamedDomainObjectProvider<SourceSet>, action: Action<ConvertAccessxTask>): TaskProvider<ConvertAccessxTask> =
+        convert(name, sourceSet.name, action)
+
+    /**
      * Registers a [ConvertAccessxTask] whose output is bundled into the resources of the source
      * set with the given [sourceSetName].
      *
@@ -62,11 +77,14 @@ abstract class AccessxExtension @Inject constructor(private val project: Project
         val task = project.tasks.register(
             "convertAccessx${name.replaceFirstChar { it.uppercaseChar() }}",
             ConvertAccessxTask::class.java
-        ) task@{
-            this@task.outputFile.convention(this@task.outputFormat.flatMap { fmt ->
+        ) {
+            val task = this
+
+            group = "modstitch/accessx"
+            task.outputFile.convention(task.outputFormat.flatMap { fmt ->
                 outputDir.map { dir -> dir.file(defaultFileName(name, fmt)) }
             })
-            action.execute(this@task)
+            action.execute(task)
         }
 
         project.pluginManager.withPlugin("java") {

@@ -39,9 +39,6 @@ accessx {
     convert("neoforge", sourceSets.neoforge) {
         inputFiles.from("mod.accessWidener")
         outputFormat = AT
-        
-        // Configures this task to run before `createMinecraftArtifacts` task on MDG.
-        runBeforeNFRT()
     }
     
     // Merge multiple source files (can be different formats)
