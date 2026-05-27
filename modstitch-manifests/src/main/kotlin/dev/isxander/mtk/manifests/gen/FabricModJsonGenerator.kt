@@ -8,10 +8,8 @@ import tools.jackson.databind.json.JsonMapper
 internal object FabricModJsonGenerator : ManifestGenerator<FabricModJsonSpec> {
     const val SCHEMA_VERSION: Int = 1
 
-    private val jsonMapper = JsonMapper.builder().build()
-
     override fun generate(spec: FabricModJsonSpec): String {
-        val config = orderedJsonConfig().apply {
+        val config = jsonNodeFactory.objectNode().apply {
             add("schemaVersion", SCHEMA_VERSION)
 
             // Required
@@ -21,11 +19,13 @@ internal object FabricModJsonGenerator : ManifestGenerator<FabricModJsonSpec> {
             // All other fields are optional
 
             addListProperty("provides", spec.provides)
-            addProperty("environment", spec.environment.map { side -> when (side) {
-                Side.BOTH -> "*"
-                Side.CLIENT -> "client"
-                Side.SERVER -> "server"
-            } })
+            addProperty("environment", spec.environment.map { side ->
+                when (side) {
+                    Side.BOTH -> "*"
+                    Side.CLIENT -> "client"
+                    Side.SERVER -> "server"
+                }
+            })
 
             val entrypoints = linkedMapOf<String, MutableList<Any>>()
             spec.entrypoints.getOrElse(emptyList()).forEach { entrypoint ->
@@ -37,7 +37,7 @@ internal object FabricModJsonGenerator : ManifestGenerator<FabricModJsonSpec> {
                     entrypointValue
                 } else {
                     // use full object form if an adapter is specified
-                    createSubConfig().apply {
+                    jsonNodeFactory.objectNode().apply {
                         add("value", entrypointValue)
                         add("adapter", entrypointAdapter)
                     }
@@ -54,13 +54,15 @@ internal object FabricModJsonGenerator : ManifestGenerator<FabricModJsonSpec> {
                 if (side == null) {
                     return@map mixin.config.get()
                 } else {
-                    return@map createSubConfig().apply {
+                    return@map jsonNodeFactory.objectNode().apply {
                         addProperty("config", mixin.config, required = true)
-                        add("environment", when (side) {
-                            Side.CLIENT -> "client"
-                            Side.SERVER -> "server"
-                            else -> error("Invalid side: $side")
-                        })
+                        add(
+                            "environment", when (side) {
+                                Side.CLIENT -> "client"
+                                Side.SERVER -> "server"
+                                else -> error("Invalid side: $side")
+                            }
+                        )
                     }
                 }
             })
@@ -88,7 +90,10 @@ internal object FabricModJsonGenerator : ManifestGenerator<FabricModJsonSpec> {
 
             addProperty("name", spec.displayName)
             addProperty("description", spec.description)
-            addListProperty("authors", spec.authors) // does anyone use contact information? I didn't even know it existed till now
+            addListProperty(
+                "authors",
+                spec.authors
+            ) // does anyone use contact information? I didn't even know it existed till now
             addListProperty("contributors", spec.contributors)
 
             val contact = mutableMapOf<String, String>()
@@ -109,6 +114,6 @@ internal object FabricModJsonGenerator : ManifestGenerator<FabricModJsonSpec> {
             addMapProperty("custom", spec.customData)
         }
 
-        return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(config)
+        return jsonMapper.writer().writeValueAsString(config)
     }
 }

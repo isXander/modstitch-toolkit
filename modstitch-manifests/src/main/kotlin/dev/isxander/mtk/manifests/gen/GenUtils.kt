@@ -1,15 +1,32 @@
 package dev.isxander.mtk.manifests.gen
 
 import org.gradle.api.provider.Provider
+import tools.jackson.core.util.DefaultIndenter
+import tools.jackson.core.util.DefaultPrettyPrinter
 import tools.jackson.databind.JsonNode
+import tools.jackson.databind.SerializationFeature
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.node.ArrayNode
 import tools.jackson.databind.node.JsonNodeFactory
 import tools.jackson.databind.node.NullNode
 import tools.jackson.databind.node.ObjectNode
+import tools.jackson.dataformat.toml.TomlMapper
 
-private val jsonNodeFactory = JsonNodeFactory.instance
-private val valueMapper = JsonMapper.builder().build()
+internal val jsonNodeFactory = JsonNodeFactory.instance
+
+private val prettyPrinter = DefaultPrettyPrinter()
+    .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
+
+internal val jsonMapper = JsonMapper.builder()
+    .defaultPrettyPrinter(prettyPrinter)
+    .enable(SerializationFeature.INDENT_OUTPUT)
+    .build()
+
+internal val tomlMapper = TomlMapper.builder()
+    .defaultPrettyPrinter(prettyPrinter)
+    .enable(SerializationFeature.INDENT_OUTPUT)
+    .build()
+
 
 internal fun <T : Any> ObjectNode.addProperty(key: String, property: Provider<T>, required: Boolean = false) =
     property
@@ -27,7 +44,7 @@ internal fun <K, V> ObjectNode.addMapProperty(key: String, property: Provider<Ma
         ?.let { addMap(key, it) }
 
 internal fun <K, V> ObjectNode.addMap(key: String, values: Map<K, V>) {
-    add(key, createSubConfig().apply {
+    add(key, jsonNodeFactory.objectNode().apply {
         values.forEach { (propertyKey, propertyValue) ->
             add(propertyKey.toString(), propertyValue)
         }
@@ -43,22 +60,13 @@ internal fun ObjectNode.add(key: String, value: Any?) {
     parent.set(path.last(), value.toJsonNode())
 }
 
-internal fun ObjectNode.createSubConfig(): ObjectNode =
-    jsonNodeFactory.objectNode()
-
-internal fun orderedJsonConfig(): ObjectNode =
-    jsonNodeFactory.objectNode()
-
-internal fun orderedTomlConfig(): ObjectNode =
-    jsonNodeFactory.objectNode()
-
 private fun ObjectNode.objectAt(key: String): ObjectNode {
     val existing = get(key)
     if (existing is ObjectNode) {
         return existing
     }
 
-    return createSubConfig().also { set(key, it) }
+    return jsonNodeFactory.objectNode().also { set(key, it) }
 }
 
 private fun Any?.toJsonNode(): JsonNode =
@@ -70,7 +78,7 @@ private fun Any?.toJsonNode(): JsonNode =
         }
         is Iterable<*> -> jsonNodeFactory.arrayNode().addAll(mapToNodes(this))
         is Array<*> -> jsonNodeFactory.arrayNode().addAll(mapToNodes(asIterable()))
-        else -> valueMapper.valueToTree(this)
+        else -> jsonMapper.valueToTree(this)
     }
 
 private fun mapToNodes(values: Iterable<*>): ArrayNode =

@@ -6,10 +6,8 @@ import dev.isxander.mtk.manifests.spec.NeoForgeModsTomlSpec
 import tools.jackson.dataformat.toml.TomlMapper
 
 internal object NeoForgeModsTomlGenerator : ManifestGenerator<NeoForgeModsTomlSpec> {
-    private val tomlMapper = TomlMapper()
-
     override fun generate(spec: NeoForgeModsTomlSpec): String {
-        val config = orderedTomlConfig().apply {
+        val config = jsonNodeFactory.objectNode().apply {
             // Non-Mod-Specific Properties
             addProperty("modLoader", spec.modLoader)
             addProperty("loaderVersion", spec.loaderVersion)
@@ -22,7 +20,7 @@ internal object NeoForgeModsTomlGenerator : ManifestGenerator<NeoForgeModsTomlSp
 
             // Mod-Specific Properties
             val modId = spec.modId.get()
-            add("mods", listOf(createSubConfig().apply {
+            add("mods", listOf(jsonNodeFactory.objectNode().apply {
                 add("modId", modId)
                 addProperty("namespace", spec.namespace)
                 addProperty("version", spec.version)
@@ -40,7 +38,7 @@ internal object NeoForgeModsTomlGenerator : ManifestGenerator<NeoForgeModsTomlSp
             }))
 
             spec.javaVersion.orNull?.let { javaVersion ->
-                add("features.$modId", listOf(createSubConfig().apply {
+                add("features.$modId", listOf(jsonNodeFactory.objectNode().apply {
                     add("javaVersion", javaVersion)
                 }))
             }
@@ -48,7 +46,7 @@ internal object NeoForgeModsTomlGenerator : ManifestGenerator<NeoForgeModsTomlSp
             spec.modProperties.getOrElse(emptyMap())
                 .takeIf { it.isNotEmpty() }
                 ?.let { modProperties ->
-                    add("modproperties.$modId", listOf(createSubConfig().apply {
+                    add("modproperties.$modId", listOf(jsonNodeFactory.objectNode().apply {
                         modProperties.forEach { (propertyKey, propertyValue) ->
                             add(propertyKey, propertyValue)
                         }
@@ -59,21 +57,25 @@ internal object NeoForgeModsTomlGenerator : ManifestGenerator<NeoForgeModsTomlSp
                 .takeIf { it.isNotEmpty() }
                 ?.let { deps ->
                     add("dependencies.$modId", deps.map { dependency ->
-                        createSubConfig().apply {
+                        jsonNodeFactory.objectNode().apply {
                             add("modId", dependency.modId.get())
-                            add("type", when (dependency.type.get()) {
-                                DependencyType.REQUIRED -> "required"
-                                DependencyType.OPTIONAL -> "optional"
-                                DependencyType.DISCOURAGED -> "discouraged"
-                                DependencyType.INCOMPATIBLE -> "incompatible"
-                            })
+                            add(
+                                "type", when (dependency.type.get()) {
+                                    DependencyType.REQUIRED -> "required"
+                                    DependencyType.OPTIONAL -> "optional"
+                                    DependencyType.DISCOURAGED -> "discouraged"
+                                    DependencyType.INCOMPATIBLE -> "incompatible"
+                                }
+                            )
                             add("versionRange", dependency.versionRange.get().toMaven())
                             dependency.side.orNull?.let { side ->
-                                add("side", when (side) {
-                                    Side.CLIENT -> "CLIENT"
-                                    Side.SERVER -> "SERVER"
-                                    Side.BOTH -> "BOTH"
-                                })
+                                add(
+                                    "side", when (side) {
+                                        Side.CLIENT -> "CLIENT"
+                                        Side.SERVER -> "SERVER"
+                                        Side.BOTH -> "BOTH"
+                                    }
+                                )
                             }
                         }
                     })
@@ -81,19 +83,24 @@ internal object NeoForgeModsTomlGenerator : ManifestGenerator<NeoForgeModsTomlSp
 
             spec.accessTransformers.getOrElse(emptyList())
                 .takeIf { it.isNotEmpty() }
-                ?.map { at -> createSubConfig().apply {
-                    add("file", at)
-                } }
+                ?.map { at ->
+                    jsonNodeFactory.objectNode().apply {
+                        add("file", at)
+                    }
+                }
                 ?.let { add("accessTransformers", it) }
 
             spec.mixins.getOrElse(emptyList())
                 .takeIf { it.isNotEmpty() }
-                ?.map { mixin -> createSubConfig().apply {
-                    addProperty("config", mixin.config)
-                    addListProperty("requiredMods", mixin.requiredMods)                } }
+                ?.map { mixin ->
+                    jsonNodeFactory.objectNode().apply {
+                        addProperty("config", mixin.config)
+                        addListProperty("requiredMods", mixin.requiredMods)
+                    }
+                }
                 ?.let { add("mixins", it) }
         }
 
-        return tomlMapper.writeValueAsString(config)
+        return tomlMapper.writer().writeValueAsString(config)
     }
 }
