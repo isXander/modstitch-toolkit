@@ -25,5 +25,6 @@ repositories {
     kikugie()
     kikugieSnapshots()
     gegy()
+    parchment()
 }
 ```

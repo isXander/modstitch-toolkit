@@ -189,3 +189,12 @@ fun RepositoryHandler.gegy() =
 internal abstract class GegyExtension(repositories: RepositoryHandler) : ModRepoExtensionImpl(repositories) {
     override fun invoke() = repositories.gegy()
 }
+
+fun RepositoryHandler.parchment() =
+    maven("https://maven.parchmentmc.org") {
+        name = "ParchmentMC"
+    }
+
+internal abstract class ParchmentExtension(repositories: RepositoryHandler) : ModRepoExtensionImpl(repositories) {
+    override fun invoke() = repositories.parchment()
+}

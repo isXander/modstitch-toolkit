@@ -22,6 +22,7 @@ class ModreposPlugin : Plugin<Project> {
         register<KikugieExtension>(target, "kikugie")
         register<KikugieSnapshotsExtension>(target, "kikugieSnapshots")
         register<GegyExtension>(target, "gegy")
+        register<ParchmentExtension>(target, "parchment")
     }
 
     private fun <T> register(target: Project, name: String, `class`: Class<T>)
