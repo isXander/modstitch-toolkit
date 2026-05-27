@@ -5,6 +5,7 @@ import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.kotlin.dsl.newInstance
 import javax.inject.Inject
@@ -196,11 +197,6 @@ abstract class ModManifestSpec {
     /** Game side a piece of mod metadata applies to. `BOTH` serialises as `*` in FMJ. */
     enum class Side { CLIENT, SERVER, BOTH }
 
-    // Redefine enum constants to avoid requiring imports
-    val BOTH = Side.BOTH
-    val CLIENT = Side.CLIENT
-    val SERVER = Side.SERVER
-
     /**
      * How a dependency must be present.
      *
@@ -211,14 +207,7 @@ abstract class ModManifestSpec {
     enum class DependencyType { REQUIRED, OPTIONAL, DISCOURAGED, INCOMPATIBLE }
 
     // Redefine enum constants to avoid requiring imports
-    val REQUIRED = DependencyType.REQUIRED
-    val DEPENDS = REQUIRED
-    val OPTIONAL = DependencyType.OPTIONAL
-    val SUGGESTS = OPTIONAL
-    val DISCOURAGED = DependencyType.DISCOURAGED
-    val CONFLICTS = DISCOURAGED
-    val INCOMPATIBLE = DependencyType.INCOMPATIBLE
-    val BREAKS = INCOMPATIBLE
+
 
     /**
      * Copies common metadata from [other] into this spec.
@@ -250,4 +239,30 @@ abstract class ModManifestSpec {
 
     @get:Inject
     protected abstract val objectFactory: ObjectFactory
+
+    // Redefine enum constants to avoid requiring imports
+
+    @JvmField @get:Internal
+    val BOTH = Side.BOTH
+    @JvmField @get:Internal
+    val CLIENT = Side.CLIENT
+    @JvmField @get:Internal
+    val SERVER = Side.SERVER
+
+    @JvmField @get:Internal
+    val REQUIRED = DependencyType.REQUIRED
+    @JvmField @get:Internal
+    val DEPENDS = REQUIRED
+    @JvmField @get:Internal
+    val OPTIONAL = DependencyType.OPTIONAL
+    @JvmField @get:Internal
+    val SUGGESTS = OPTIONAL
+    @JvmField @get:Internal
+    val DISCOURAGED = DependencyType.DISCOURAGED
+    @JvmField @get:Internal
+    val CONFLICTS = DISCOURAGED
+    @JvmField @get:Internal
+    val INCOMPATIBLE = DependencyType.INCOMPATIBLE
+    @JvmField @get:Internal
+    val BREAKS = INCOMPATIBLE
 }
