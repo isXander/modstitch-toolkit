@@ -1,5 +1,6 @@
-package dev.isxander.mtk.manifests.spec
+package dev.isxander.mtk.manifests
 
+import dev.isxander.mtk.manifests.spec.VersionRange
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

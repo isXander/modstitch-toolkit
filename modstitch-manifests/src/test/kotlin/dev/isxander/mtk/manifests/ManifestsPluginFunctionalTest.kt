@@ -26,7 +26,7 @@ class ManifestsPluginFunctionalTest {
                 modId.set("example")
                 version.set("1.0.0")
                 displayName.set("Example")
-                depends("minecraft", "[1.20,1.21)")
+                dependency("minecraft", REQUIRED, "[1.20,1.21)")
             }
 
             manifests.neoForgeModsToml(sourceSets.main.get()) {
@@ -36,7 +36,7 @@ class ManifestsPluginFunctionalTest {
                 licenses.add("MIT")
                 modLoader.set("javafml")
                 loaderVersion.set("[4,)")
-                required("minecraft", "[1.20,1.21)")
+                dependency("minecraft", REQUIRED, "[1.20,1.21)")
             }
             """.trimIndent()
         )

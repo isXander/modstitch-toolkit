@@ -14,7 +14,7 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.*
 import javax.inject.Inject
 
 abstract class ManifestsExtension @Inject constructor(
@@ -124,12 +124,16 @@ abstract class ManifestsExtension @Inject constructor(
         return task
     }
 
-    /** Lazy provider of every release Minecraft version with a numeric dotted id. */
+    /** Lazy provider of every *release* (NOT SNAPSHOTS) Minecraft version with a numeric dotted id. */
     fun minecraftReleases(): Provider<List<String>> =
-        providers.of(MinecraftReleasesValueSource::class.java) {}
+        providers.of(MinecraftReleasesValueSource::class) {}
 
-    fun minecraftReleasesMatching(range: String): Provider<List<String>> =
-        minecraftReleasesMatching(mavenRange(range))
+    /**
+     * Lazy provider of every *release* (NOT SNAPSHOTS) Minecraft version that satisifies the
+     * Maven range supplied by [mavenRange].
+     */
+    fun minecraftReleasesMatching(mavenRange: String): Provider<List<String>> =
+        minecraftReleasesMatching(mavenRange(mavenRange))
 
     /** Lazy provider of every release Minecraft version that satisfies [range]. */
     fun minecraftReleasesMatching(range: VersionRange): Provider<List<String>> =

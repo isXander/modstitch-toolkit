@@ -1,10 +1,9 @@
-package dev.isxander.mtk.manifests.gen
+package dev.isxander.mtk.manifests
 
+import dev.isxander.mtk.manifests.gen.FabricModJsonGenerator
+import dev.isxander.mtk.manifests.gen.NeoForgeModsTomlGenerator
 import dev.isxander.mtk.manifests.spec.FabricModJsonSpec
-import dev.isxander.mtk.manifests.spec.ModManifestSpec.DependencyType
-import dev.isxander.mtk.manifests.spec.ModManifestSpec.Side
 import dev.isxander.mtk.manifests.spec.NeoForgeModsTomlSpec
-import dev.isxander.mtk.manifests.spec.VersionRange
 import org.gradle.testfixtures.ProjectBuilder
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.dataformat.toml.TomlMapper
@@ -33,11 +32,11 @@ class ManifestGeneratorTest {
             entrypoint("main", "example.OtherMain")
             entrypoint("client", "example.Client", "kotlin")
             mixin("example.mixins.json")
-            mixin("example.client.mixins.json", Side.CLIENT)
+            mixin("example.client.mixins.json", CLIENT)
             accessWidener("example.accesswidener")
-            depends("minecraft", "[1.20,1.21)")
-            suggests("modmenu")
-            breaks("badmod", "[2.0]")
+            dependency("minecraft", DEPENDS, "[1.20,1.21)")
+            dependency("modmenu", SUGGESTS)
+            dependency("badmod", BREAKS, "[2.0]")
             contactInformation.put("discord", "https://example.test/discord")
             languageAdapters.put("kotlin", "net.fabricmc.language.kotlin.KotlinAdapter")
             customData.put("extra", "value")
@@ -74,8 +73,8 @@ class ManifestGeneratorTest {
             logoBlur.set(false)
             javaVersion.set("[21,)")
             modProperties.put("catalogueItemIcon", "example:item")
-            required("minecraft", "[1.20,1.21)")
-            dependency("client_only", DependencyType.OPTIONAL, VersionRange.parseMaven("[1.0,)"), Side.CLIENT)
+            dependency("minecraft", REQUIRED, "[1.20,1.21)")
+            dependency("client_only", OPTIONAL, "[1.0,)", CLIENT)
         }
 
         val expectedText = resourceText("neoforge.mods.toml")
