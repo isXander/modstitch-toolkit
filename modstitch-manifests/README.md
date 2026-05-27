@@ -4,7 +4,7 @@ A Gradle plugin to programmatically generate mod metadata files (e.g. `fabric.mo
 
 ```kotlin
 plugins {
-    id("dev.isxander.mtk.manifests") version "0.1.1"
+    id("dev.isxander.mtk.manifests") version "0.1.3"
 }
 
 // modstitch-manifests: programmatic fabric.mod.json and neoforge.mods.toml generation
