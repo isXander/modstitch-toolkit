@@ -449,6 +449,7 @@ class MultiloaderPlugin @Inject constructor(
             // All run configs should be for the fabric source set.
             configureEach {
                 sourceSet = target.sourceSets.fabric.name
+                runDirectory.convention(target.layout.projectDirectory.dir("runs/$name"))
             }
 
             if (target.conventionCreateDefaultRuns.get()) {
@@ -486,6 +487,7 @@ class MultiloaderPlugin @Inject constructor(
                 // All run configs should be for the neoforge source set.
                 modSources {
                     add(neoforge)
+                    add(main)
                     primary = neoforge
                 }
                 // Makes the IDEA run configs use the correct classpath.
