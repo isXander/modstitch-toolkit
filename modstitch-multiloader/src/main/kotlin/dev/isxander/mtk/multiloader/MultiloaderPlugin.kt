@@ -15,6 +15,7 @@ import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.problems.Problems
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -93,6 +94,7 @@ class MultiloaderPlugin @Inject constructor(
         val neoforge = target.sourceSets.register("neoforge")
 
         target.java.withSourcesJar()
+        target.java.withJavadocJar()
 
         target.java.registerFeature("fabric") {
             usingSourceSet(fabric.get())
@@ -104,6 +106,10 @@ class MultiloaderPlugin @Inject constructor(
             usingSourceSet(neoforge.get())
             withSourcesJar()
             withJavadocJar()
+        }
+
+        target.tasks.withType<Javadoc> {
+            isFailOnError = false
         }
 
         target.configurations {
