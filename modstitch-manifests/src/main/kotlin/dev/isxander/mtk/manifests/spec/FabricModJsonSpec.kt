@@ -1,6 +1,7 @@
 package dev.isxander.mtk.manifests.spec
 
 import dev.isxander.mtk.accessx.plugin.ConvertAccessxTask
+import org.gradle.api.Action
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
@@ -8,6 +9,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.assign
+import org.gradle.kotlin.dsl.newInstance
 
 /**
  * Models a `fabric.mod.json` v1 manifest.
@@ -94,13 +96,20 @@ abstract class FabricModJsonSpec : ModManifestSpec() {
         environment = Side.SERVER
     }
 
+    fun makeEntrypoint(action: Action<Entrypoint>): Entrypoint =
+        objectFactory.newInstance(Entrypoint::class).apply(action::execute)
+
+    fun entrypoint(action: Action<Entrypoint>) {
+        entrypoints.add(makeEntrypoint(action))
+    }
+
     @JvmOverloads
     fun entrypoint(name: String, value: String, adapter: String? = null) {
-        create(Entrypoint::class.java, entrypoints) {
-            this.entrypoint = name
-            this.value = value
+        entrypoint {
+            this.entrypoint.set(name)
+            this.value.set(value)
             if (adapter != null) {
-                this.adapter = adapter
+                this.adapter.set(adapter)
             }
         }
     }
@@ -121,32 +130,6 @@ abstract class FabricModJsonSpec : ModManifestSpec() {
     fun accessWidener(task: TaskProvider<ConvertAccessxTask>) {
         accessWidener.set(task.flatMap { t -> t.outputFile.map { it.asFile.name } })
     }
-
-    // FMJ DX wording → common dependency types.
-
-    fun depends(modId: String, range: VersionRange = VersionRange.Any) =
-        dependency(modId, DependencyType.REQUIRED, range)
-
-    fun depends(modId: String, range: String) =
-        dependency(modId, DependencyType.REQUIRED, range)
-
-    fun suggests(modId: String, range: VersionRange = VersionRange.Any) =
-        dependency(modId, DependencyType.OPTIONAL, range)
-
-    fun suggests(modId: String, range: String) =
-        dependency(modId, DependencyType.OPTIONAL, range)
-
-    fun conflicts(modId: String, range: VersionRange = VersionRange.Any) =
-        dependency(modId, DependencyType.DISCOURAGED, range)
-
-    fun conflicts(modId: String, range: String) =
-        dependency(modId, DependencyType.DISCOURAGED, range)
-
-    fun breaks(modId: String, range: VersionRange = VersionRange.Any) =
-        dependency(modId, DependencyType.INCOMPATIBLE, range)
-
-    fun breaks(modId: String, range: String) =
-        dependency(modId, DependencyType.INCOMPATIBLE, range)
 
     abstract class Entrypoint {
         @get:Input

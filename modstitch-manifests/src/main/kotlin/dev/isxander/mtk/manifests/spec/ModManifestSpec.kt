@@ -1,10 +1,12 @@
 package dev.isxander.mtk.manifests.spec
 
+import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
+import org.gradle.kotlin.dsl.newInstance
 import javax.inject.Inject
 
 /**
@@ -95,44 +97,50 @@ abstract class ModManifestSpec {
     @get:Optional
     abstract val dependencies: ListProperty<Dependency>
 
+    fun makeMixin(action: Action<Mixin>): Mixin =
+        objectFactory.newInstance(Mixin::class).apply(action::execute)
+
+    fun mixin(action: Action<Mixin>) {
+        mixins.add(makeMixin(action))
+    }
+
     /** Adds a mixin configuration JSON path. */
     fun mixin(config: String) {
-        create(Mixin::class.java, mixins) {
+        mixin {
             this.config.set(config)
         }
     }
 
     /** Adds a mixin configuration that only applies on the given [side]. */
     fun mixin(config: String, side: Side) {
-        create(Mixin::class.java, mixins) {
+        mixin {
             this.config.set(config)
             this.side.set(side)
         }
     }
 
+    /**
+     * Creates a dependency and configures it with [action] but does not register it.
+     */
+    fun makeDependency(action: Action<Dependency>): Dependency =
+        objectFactory.newInstance(Dependency::class).apply(action::execute)
+
+    /**
+     * Adds a dependency with the given [action].
+     */
+    fun dependency(action: Action<Dependency>) {
+        dependencies.add(makeDependency(action))
+    }
+
     /** Adds a dependency. */
     @JvmOverloads
-    fun dependency(modId: String, type: DependencyType, range: VersionRange = VersionRange.Any) {
-        create(Dependency::class.java, dependencies) {
+    fun dependency(modId: String, type: DependencyType, mavenRange: String = VersionRange.Any.toMaven(), side: Side? = null) {
+        dependencies.add(makeDependency {
             this.modId.set(modId)
             this.type.set(type)
-            this.versionRange.set(range)
-        }
-    }
-
-    /** Adds a dependency, parsing [range] as a Maven version range. */
-    fun dependency(modId: String, type: DependencyType, range: String) {
-        dependency(modId, type, VersionRange.parseMaven(range))
-    }
-
-    /** Adds a dependency restricted to one [side]. */
-    fun dependency(modId: String, type: DependencyType, range: VersionRange, side: Side) {
-        create(Dependency::class.java, dependencies) {
-            this.modId.set(modId)
-            this.type.set(type)
-            this.versionRange.set(range)
-            this.side.set(side)
-        }
+            this.versionRange.set(VersionRange.parseMaven(mavenRange))
+            if (side != null) this.side.set(side)
+        })
     }
 
     abstract class Mixin {
@@ -158,6 +166,8 @@ abstract class ModManifestSpec {
         @get:Input
         abstract val modId: Property<String>
 
+        fun modId(id: String) = modId.set(id)
+
         @get:Input
         abstract val type: Property<DependencyType>
 
@@ -165,14 +175,31 @@ abstract class ModManifestSpec {
         @get:Optional
         abstract val versionRange: Property<VersionRange>
 
+        fun versionRange(range: VersionRange) = versionRange.set(range)
+        fun versionRange(mavenRange: String) = versionRange(VersionRange.parseMaven(mavenRange))
+
         /** Side this dependency is required on. Absent means both. */
         @get:Input
         @get:Optional
         abstract val side: Property<Side>
+
+        fun required() = type.set(DependencyType.REQUIRED)
+        fun depends() = required()
+        fun optional() = type.set(DependencyType.OPTIONAL)
+        fun suggests() = optional()
+        fun discouraged() = type.set(DependencyType.DISCOURAGED)
+        fun conflicts() = discouraged()
+        fun incompatible() = type.set(DependencyType.INCOMPATIBLE)
+        fun breaks() = incompatible()
     }
 
     /** Game side a piece of mod metadata applies to. `BOTH` serialises as `*` in FMJ. */
     enum class Side { CLIENT, SERVER, BOTH }
+
+    // Redefine enum constants to avoid requiring imports
+    val BOTH = Side.BOTH
+    val CLIENT = Side.CLIENT
+    val SERVER = Side.SERVER
 
     /**
      * How a dependency must be present.
@@ -182,6 +209,16 @@ abstract class ModManifestSpec {
      * NMT `discouraged`; `INCOMPATIBLE` ↔ FMJ `breaks` / NMT `incompatible`.
      */
     enum class DependencyType { REQUIRED, OPTIONAL, DISCOURAGED, INCOMPATIBLE }
+
+    // Redefine enum constants to avoid requiring imports
+    val REQUIRED = DependencyType.REQUIRED
+    val DEPENDS = REQUIRED
+    val OPTIONAL = DependencyType.OPTIONAL
+    val SUGGESTS = OPTIONAL
+    val DISCOURAGED = DependencyType.DISCOURAGED
+    val CONFLICTS = DISCOURAGED
+    val INCOMPATIBLE = DependencyType.INCOMPATIBLE
+    val BREAKS = INCOMPATIBLE
 
     /**
      * Copies common metadata from [other] into this spec.
@@ -211,17 +248,6 @@ abstract class ModManifestSpec {
         dependencies.addAll(other.dependencies)
     }
 
-    @Inject
-    protected abstract fun getObjectFactory(): ObjectFactory
-
-    protected fun <T : Any> create(
-        type: Class<T>,
-        list: ListProperty<T>,
-        configure: T.() -> Unit,
-    ): T {
-        val item = getObjectFactory().newInstance(type)
-        item.configure()
-        list.add(item)
-        return item
-    }
+    @get:Inject
+    protected abstract val objectFactory: ObjectFactory
 }

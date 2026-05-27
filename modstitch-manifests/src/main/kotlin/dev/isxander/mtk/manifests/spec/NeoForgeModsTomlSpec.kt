@@ -142,30 +142,4 @@ abstract class NeoForgeModsTomlSpec : ModManifestSpec() {
     fun accessTransformer(task: TaskProvider<ConvertAccessxTask>) {
         accessTransformers.add(task.flatMap { t -> t.outputFile.map { it.asFile.name } })
     }
-
-    // NMT DX wording → common dependency types.
-
-    fun required(modId: String, range: VersionRange = VersionRange.Any) =
-        dependency(modId, DependencyType.REQUIRED, range)
-
-    fun required(modId: String, range: String) =
-        dependency(modId, DependencyType.REQUIRED, range)
-
-    fun optional(modId: String, range: VersionRange = VersionRange.Any) =
-        dependency(modId, DependencyType.OPTIONAL, range)
-
-    fun optional(modId: String, range: String) =
-        dependency(modId, DependencyType.OPTIONAL, range)
-
-    fun discouraged(modId: String, range: VersionRange = VersionRange.Any) =
-        dependency(modId, DependencyType.DISCOURAGED, range)
-
-    fun discouraged(modId: String, range: String) =
-        dependency(modId, DependencyType.DISCOURAGED, range)
-
-    fun incompatible(modId: String, range: VersionRange = VersionRange.Any) =
-        dependency(modId, DependencyType.INCOMPATIBLE, range)
-
-    fun incompatible(modId: String, range: String) =
-        dependency(modId, DependencyType.INCOMPATIBLE, range)
 }
