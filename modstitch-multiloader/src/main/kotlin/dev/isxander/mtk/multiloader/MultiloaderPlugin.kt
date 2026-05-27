@@ -93,11 +93,13 @@ class MultiloaderPlugin @Inject constructor(
         target.java.registerFeature("fabric") {
             usingSourceSet(fabric.get())
             withSourcesJar()
+            withJavadocJar()
         }
 
         target.java.registerFeature("neoforge") {
             usingSourceSet(neoforge.get())
             withSourcesJar()
+            withJavadocJar()
         }
 
         target.configurations {
