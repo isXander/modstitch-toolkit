@@ -5,6 +5,9 @@ import org.gradle.api.artifacts.repositories.ArtifactRepository
 
 interface ModRepoExtension {
     operator fun invoke(): ArtifactRepository
+
+    // Groovy compatibility
+    fun call(): ArtifactRepository = invoke()
 }
 
 interface ExclusiveCapable {
