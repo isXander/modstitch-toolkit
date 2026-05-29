@@ -197,10 +197,10 @@ class MultiloaderPlugin @Inject constructor(
         val fabric = sourceSets.fabric.get()
         val neoforge = sourceSets.neoforge.get()
 
-        fun configureSourceSet(sourceSet: SourceSet, localRuntimeName: String) {
+        fun configureSourceSet(sourceSet: SourceSet) {
             target.dependencies {
                 sourceSet.compileOnlyConfigurationName(main.output)
-                localRuntimeName(main.output)
+                sourceSet.runtimeClasspathConfigurationName(main.output)
             }
 
             target.tasks {
@@ -217,8 +217,8 @@ class MultiloaderPlugin @Inject constructor(
             }
         }
 
-        configureSourceSet(fabric, "fabricLocalRuntime")
-        configureSourceSet(neoforge, "neoforgeLocalRuntime")
+        configureSourceSet(fabric)
+        configureSourceSet(neoforge)
     }
 
     /**
@@ -311,6 +311,13 @@ class MultiloaderPlugin @Inject constructor(
                 fabric.compileClasspathConfigurationName { extendsFrom(named("minecraftNamedCompile")) }
                 fabric.runtimeClasspathConfigurationName { extendsFrom(named("minecraftNamedRuntime")) }
             }
+        }
+
+        // name doesn't matter, it's conventionally mod ID but we don't know that
+        // gets the main sourceset's resources to appear in dev runs
+        target.loom.mods.register("fabric") {
+            sourceSet(main)
+            sourceSet(fabric)
         }
     }
 
