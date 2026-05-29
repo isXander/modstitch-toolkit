@@ -200,7 +200,7 @@ class MultiloaderPlugin @Inject constructor(
         fun configureSourceSet(sourceSet: SourceSet) {
             target.dependencies {
                 sourceSet.compileOnlyConfigurationName(main.output)
-                sourceSet.runtimeClasspathConfigurationName(main.output)
+                sourceSet.runtimeOnlyConfigurationName(main.output)
             }
 
             target.tasks {
