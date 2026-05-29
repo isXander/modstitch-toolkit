@@ -6,7 +6,7 @@ A Gradle plugin to provide shorthand functions to popular modding maven reposito
 
 ```kotlin
 plugins {
-    id("dev.isxander.mtk.modrepos") version "0.1.1"
+    id("dev.isxander.mtk.modrepos") version "0.1.2"
 }
 
 repositories {
