@@ -481,8 +481,10 @@ class MultiloaderPlugin @Inject constructor(
         target.loom.runConfigs {
             // Loom creates a client and server run config by default,
             // these are for the main source set and therefore unwanted.
-            remove(getByName("client"))
-            remove(getByName("server"))
+            if (target.conventionCreateDefaultRuns.get()) {
+                remove(getByName("client"))
+                remove(getByName("server"))
+            }
 
             // All run configs should be for the fabric source set.
             configureEach {

@@ -14,6 +14,7 @@ private fun convention(default: Boolean? = null) = ReadOnlyProperty<Project, Pro
 
 /**
  * Whether to create default run configurations for each loader source set.
+ * Also deletes the existing Loom runs.
  */
 val Project.conventionCreateDefaultRuns by convention(default = true)
 
