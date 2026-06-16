@@ -276,7 +276,7 @@ class MultiloaderPlugin @Inject constructor(
      *
      * - Extends the fabric source set's compile/runtime classpath with the Minecraft classpath
      * - Sets up `fabricLocalRuntime` configuration
-     * - Removes the Loom-created `localRuntime` configuration
+     * - Disables dependency declarations on Loom's `localRuntime` configuration
      *
      * @see setupCommonSources
      */
@@ -295,9 +295,12 @@ class MultiloaderPlugin @Inject constructor(
             val fabricLocalRuntime = dependencyScope("fabricLocalRuntime")
             named(fabric.runtimeClasspathConfigurationName) { extendsFrom(fabricLocalRuntime) }
 
-            // Fabric generates a `localRuntime` configuration,
-            // but this is for the main source set and therefore unwanted.
-            removeIf { it.name == "localRuntime" }
+            // Keep Loom's provider-backed configuration present for Loom internals,
+            // but prevent users from declaring dependencies on the wrong runtime bucket.
+            named("localRuntime") {
+                isCanBeDeclared = false
+                description = "Disabled by modstitch-multiloader; use fabricLocalRuntime or neoforgeLocalRuntime instead."
+            }
 
             // Loom doesn't create the `minecraftNamed*` until afterEvaluate
             // https://github.com/FabricMC/fabric-loom/blob/cf42ac/src/main/java/net/fabricmc/loom/configuration/providers/minecraft/MinecraftSourceSets.java#L123
