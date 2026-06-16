@@ -4,7 +4,7 @@ plugins {
     id("modstitch.gradle-plugin-conventions")
 }
 
-version = "0.1.6"
+version = "0.1.7"
 
 dependencies {
     compileOnly(libs.plugins.fabric.loom.asDependency())
