@@ -48,15 +48,6 @@ class MultiloaderPlugin @Inject constructor(
         // Used to provide the `api` things.
         target.pluginManager.apply("java-library")
 
-        // Used to provide Minecraft sources to both `main` and `fabric` source set.
-        // Requires the following gradle properties in the target project:
-        // - `fabric.loom.disableDefaultRunConfigs=true` (IN A PR, NOT IN LOOM YET)
-        if (target.conventionLoomRemap.get()) {
-            target.pluginManager.apply("net.fabricmc.fabric-loom-remap")
-        } else {
-            target.pluginManager.apply("net.fabricmc.fabric-loom")
-        }
-
         // Used to provide NeoForge to the `neoforge` source set.
         // Requires the following gradle properties in the target project:
         // This won't actually work until https://github.com/neoforged/NeoGradle/pull/316
@@ -66,6 +57,15 @@ class MultiloaderPlugin @Inject constructor(
         target.extra["neogradle.subsystems.conventions.jarjar.create-main-jarjar=false"] = false
 
         target.pluginManager.apply("net.neoforged.gradle.userdev")
+
+        // Used to provide Minecraft sources to both `main` and `fabric` source set.
+        // Requires the following gradle properties in the target project:
+        // - `fabric.loom.disableDefaultRunConfigs=true` (IN A PR, NOT IN LOOM YET)
+        if (target.conventionLoomRemap.get()) {
+            target.pluginManager.apply("net.fabricmc.fabric-loom-remap")
+        } else {
+            target.pluginManager.apply("net.fabricmc.fabric-loom")
+        }
     }
 
     /**
