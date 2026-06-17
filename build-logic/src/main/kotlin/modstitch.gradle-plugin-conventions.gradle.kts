@@ -36,6 +36,6 @@ tasks.withType<Test>().configureEach {
 }
 
 gradlePlugin {
-    website = "https://github.com/isxander/modstitch2"
-    vcsUrl = "https://github.com/isxander/modstitch2.git"
+    website = "https://github.com/isxander/modstitch-toolkit"
+    vcsUrl = "https://github.com/isxander/modstitch-toolkit.git"
 }
