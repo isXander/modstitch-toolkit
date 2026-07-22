@@ -4,7 +4,7 @@ plugins {
     id("modstitch.gradle-plugin-conventions")
 }
 
-version = "0.1.3"
+version = "0.1.4"
 
 dependencies {
     // For ConvertAccessxTask wiring on FMJ/NMT specs.
