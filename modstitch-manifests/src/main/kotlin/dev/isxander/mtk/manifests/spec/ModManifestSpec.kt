@@ -4,6 +4,7 @@ import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
@@ -136,10 +137,15 @@ abstract class ModManifestSpec {
     /** Adds a dependency. */
     @JvmOverloads
     fun dependency(modId: String, type: DependencyType, mavenRange: String = VersionRange.Any.toMaven(), side: Side? = null) {
+        dependency(modId, type, VersionRange.parseMaven(mavenRange), side)
+    }
+
+    @JvmOverloads
+    fun dependency(modId: String, type: DependencyType, versionRange: VersionRange, side: Side? = null) {
         dependencies.add(makeDependency {
             this.modId.set(modId)
             this.type.set(type)
-            this.versionRange.set(VersionRange.parseMaven(mavenRange))
+            this.versionRange.set(versionRange)
             if (side != null) this.side.set(side)
         })
     }
@@ -178,6 +184,7 @@ abstract class ModManifestSpec {
 
         fun versionRange(range: VersionRange) = versionRange.set(range)
         fun versionRange(mavenRange: String) = versionRange(VersionRange.parseMaven(mavenRange))
+        fun versionRange(mavenRange: Provider<String>) = versionRange.set(mavenRange.map { VersionRange.parseMaven(it) })
 
         /** Side this dependency is required on. Absent means both. */
         @get:Input
