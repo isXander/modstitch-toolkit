@@ -86,10 +86,17 @@ abstract class NeoForgeModsTomlSpec : ModManifestSpec() {
     @get:Optional
     abstract val javaVersion: Property<String>
 
-    /** Custom mod properties, written under `[[modproperties.<modId>]]`. */
+    /**
+     * Custom mod properties, written under `[[modproperties.<modId>]]`.
+     *
+     * Values must be `java.io.Serializable` (primitives, strings, lists, and
+     * maps thereof) so the task input can be fingerprinted and survive the
+     * Gradle configuration cache. Non-serialisable values will fail the build
+     * at task snapshotting time.
+     */
     @get:Input
     @get:Optional
-    abstract val modProperties: MapProperty<String, String>
+    abstract val modProperties: MapProperty<String, Any>
 
     /** Paths (relative to the JAR root) to access-transformer config files. */
     @get:Input
