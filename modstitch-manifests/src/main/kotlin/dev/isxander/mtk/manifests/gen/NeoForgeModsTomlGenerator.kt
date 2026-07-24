@@ -38,19 +38,19 @@ internal object NeoForgeModsTomlGenerator : ManifestGenerator<NeoForgeModsTomlSp
             }))
 
             spec.javaVersion.orNull?.let { javaVersion ->
-                add("features.$modId", listOf(jsonNodeFactory.objectNode().apply {
+                add("features.$modId", jsonNodeFactory.objectNode().apply {
                     add("javaVersion", javaVersion)
-                }))
+                })
             }
 
             spec.modProperties.getOrElse(emptyMap())
                 .takeIf { it.isNotEmpty() }
                 ?.let { modProperties ->
-                    add("modproperties.$modId", listOf(jsonNodeFactory.objectNode().apply {
+                    add("modproperties.$modId", jsonNodeFactory.objectNode().apply {
                         modProperties.forEach { (propertyKey, propertyValue) ->
                             add(propertyKey, propertyValue)
                         }
-                    }))
+                    })
                 }
 
             spec.dependencies.getOrElse(emptyList())
