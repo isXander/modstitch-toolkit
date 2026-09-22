@@ -5,6 +5,8 @@ package dev.isxander.mtk.multiloader
 import dev.isxander.mtk.multiloader.jarinjar.UniversalJarInJar
 import dev.isxander.mtk.multiloader.neoverification.VerifyCommonNeoforgeOutput
 import dev.isxander.mtk.multiloader.utils.*
+import dev.isxander.mtk.multiloader.publishing.configurePublicationCapabilities
+import dev.isxander.mtk.multiloader.publishing.setupFeatures
 import net.fabricmc.loom.task.ManifestModificationAction
 import net.fabricmc.loom.task.service.JarManifestService
 import net.neoforged.gradle.common.tasks.JarJar
@@ -16,7 +18,6 @@ import org.gradle.api.problems.Problems
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.Jar
-import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import javax.inject.Inject
@@ -27,6 +28,7 @@ class MultiloaderPlugin @Inject constructor(
     override fun apply(target: Project) {
         applyPlugins(target)
         setupFeatures(target)
+        configurePublicationCapabilities(target)
         setupCommonConfigurations(target)
         setupFabricClasspath(target)
         setupNeoforgeClasspath(target)
@@ -65,81 +67,6 @@ class MultiloaderPlugin @Inject constructor(
             target.pluginManager.apply("net.fabricmc.fabric-loom-remap")
         } else {
             target.pluginManager.apply("net.fabricmc.fabric-loom")
-        }
-    }
-
-    /**
-     * Sets up the fabric and neoforge source sets.
-     *
-     * Enables sources jars.
-     *
-     * Creates the following source sets:
-     * - `fabric`
-     * - `neoforge`
-     *
-     * Creates the following features:
-     * - `fabric`
-     * - `neoforge`
-     *
-     * Configures the `*Elements` configurations to include capabilities:
-     * - `$group:$name:$version` (applied to all)
-     * - `$group:$name-common:$version` (applied to main)
-     * - `$group:$name-fabric:$version` (applied to fabric)
-     * - `$group:$name-neoforge:$version` (applied to neoforge)
-     *
-     * Configures the `*Elements` configurations to include mcgradleconventions' loader attribute.
-     */
-    private fun setupFeatures(target: Project) {
-        val fabric = target.sourceSets.register("fabric")
-        val neoforge = target.sourceSets.register("neoforge")
-
-        target.java.withSourcesJar()
-        target.java.withJavadocJar()
-
-        target.java.registerFeature("fabric") {
-            usingSourceSet(fabric.get())
-            withSourcesJar()
-            withJavadocJar()
-        }
-
-        target.java.registerFeature("neoforge") {
-            usingSourceSet(neoforge.get())
-            withSourcesJar()
-            withJavadocJar()
-        }
-
-        target.tasks.withType<Javadoc> {
-            isFailOnError = false
-        }
-
-        target.configurations {
-            // Add capabilities to all the source sets
-            // Every feature (including common) has to have the ambiguous capability,
-            // so requesting via attribute has all features as candidates for module resolution.
-            configureElements(target.sourceSets.main.get()) {
-                attributes {
-                    attribute(modLoaderAttribute, MOD_LOADER_ATTRIBUTE_COMMON)
-                }
-
-                outgoing.capability(target.provider { "${target.group}:${target.name}:${target.version}" })
-                outgoing.capability(target.provider { "${target.group}:${target.name}-common:${target.version}" })
-            }
-            configureElements(fabric.get()) {
-                attributes {
-                    attribute(modLoaderAttribute, MOD_LOADER_ATTRIBUTE_FABRIC)
-                }
-
-                // fabric capability set by the feature def
-                outgoing.capability(target.provider { "${target.group}:${target.name}:${target.version}" })
-            }
-            configureElements(neoforge.get()) {
-                attributes {
-                    attribute(modLoaderAttribute, MOD_LOADER_ATTRIBUTE_NEOFORGE)
-                }
-
-                // neoforge capability set by the feature def
-                outgoing.capability(target.provider { "${target.group}:${target.name}:${target.version}" })
-            }
         }
     }
 

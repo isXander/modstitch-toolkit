@@ -39,7 +39,7 @@ plugins {
     id("net.fabricmc.fabric-loom") version "x.y.z" apply false
     id("net.neoforged.gradle.userdev") version "x.y.z" apply false
     
-    id("dev.isxander.mtk.multiloader") version "0.1.8"
+    id("dev.isxander.mtk.multiloader") version "0.1.9"
 }
 
 dependencies {
@@ -205,6 +205,16 @@ This plugin creates many variants and artifacts.
 
 The common, fabric, and neoforge jars are published as module metadata variants
 with the attribute `io.github.mcgradleconventions.loader`.
+
+Published capabilities use the Maven publication's `groupId`, `artifactId`, and `version`,
+including when they differ from the Gradle project coordinates (for example, a Stonecutter
+project named `26.1` published with `artifactId = "controlify"`). All loader variants
+provide the publication's base capability, plus `-common`, `-fabric`, or `-neoforge`.
+This allows consumers to select a loader using its attribute or feature capability without
+additional publisher configuration. Project dependencies retain project-based capabilities.
+
+After upgrading from a version with incorrectly named published capabilities, republish the
+mod: upgrading the plugin does not change metadata already stored in a Maven repository.
 
 #### Example
 
