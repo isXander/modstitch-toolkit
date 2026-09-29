@@ -188,8 +188,12 @@ class MultiloaderPlugin @Inject constructor(
             val sources = checkNotNull(main.kotlin) {
                 "The Kotlin JVM plugin did not register Kotlin sources for main"
             }
+            val mainCompile = target.tasks.named<KotlinCompile>(main.getCompileTaskName("kotlin"))
             target.tasks.named<KotlinCompile>(commonNeoforgeCheck.get().getCompileTaskName("kotlin")) {
                 setSource(sources)
+                // Kotlin embeds the module name in every class's Metadata annotation.
+                // The check source set's default name would make identical code differ.
+                compilerOptions.moduleName.set(mainCompile.flatMap { it.compilerOptions.moduleName })
             }
         }
         target.pluginManager.withPlugin("scala") {
