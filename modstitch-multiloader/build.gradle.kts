@@ -4,11 +4,12 @@ plugins {
     id("modstitch.gradle-plugin-conventions")
 }
 
-version = "0.1.9"
+version = "0.1.10"
 
 dependencies {
     compileOnly(libs.plugins.fabric.loom.asDependency())
     compileOnly(libs.plugins.neogradle.asDependency())
+    compileOnly(libs.plugins.kotlin.jvm.asDependency())
 
     implementation(libs.jackson.databind)
 }

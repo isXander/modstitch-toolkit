@@ -39,7 +39,7 @@ plugins {
     id("net.fabricmc.fabric-loom") version "x.y.z" apply false
     id("net.neoforged.gradle.userdev") version "x.y.z" apply false
     
-    id("dev.isxander.mtk.multiloader") version "0.1.9"
+    id("dev.isxander.mtk.multiloader") version "0.1.10"
 }
 
 dependencies {
@@ -287,7 +287,9 @@ It then compares the compiled class files of the common source set against the N
 
 This will effectively catch these sorts of issues.
 
-This is also compatible with any Kotlin code.
+The check recompiles Java, Kotlin JVM, and Scala sources from `main`, including additional
+directories configured for those languages. Their directories remain owned by `main` in IDE
+models. Other language plugins need their compiler tasks wired into the check separately.
 
 ## How does it work?
 

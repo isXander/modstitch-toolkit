@@ -32,3 +32,6 @@ val Run.idea
 
 val SourceSet.kotlin: SourceDirectorySet?
     get() = extensions.findByName("kotlin") as SourceDirectorySet?
+
+val SourceSet.scala: SourceDirectorySet?
+    get() = extensions.findByName("scala") as SourceDirectorySet?

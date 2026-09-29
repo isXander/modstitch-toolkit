@@ -1,5 +1,6 @@
 [versions]
 kotlin-dsl = "6.5.7"
+kotlin-jvm = "2.4.20"
 plugin-publish = "2.1.1"
 fabric-loom = "1.17.11"
 mod-dev-gradle = "2.0.141"
@@ -10,6 +11,7 @@ junit-platform = "1.13.4"
 
 [plugins]
 kotlin-dsl = { id = "org.gradle.kotlin.kotlin-dsl", version.ref = "kotlin-dsl" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-jvm" }
 plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "plugin-publish" }
 fabric-loom = { id = "net.fabricmc.fabric-loom", version.ref = "fabric-loom" }
 mod-dev-gradle = { id = "net.neoforged.moddev", version.ref = "mod-dev-gradle" }

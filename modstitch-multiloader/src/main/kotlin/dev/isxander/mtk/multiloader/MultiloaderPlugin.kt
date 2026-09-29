@@ -18,8 +18,11 @@ import org.gradle.api.problems.Problems
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.scala.ScalaCompile
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import javax.inject.Inject
 
 class MultiloaderPlugin @Inject constructor(
@@ -152,7 +155,7 @@ class MultiloaderPlugin @Inject constructor(
      * NeoForge patches vanilla methods and changes their signatures.
      * We need to ensure that the compiled common code is compatible with a NeoForge runtime.
      *
-     * To do this, we create an internal source set, `commonNeoforgeCompat`,
+     * To do this, we create an internal source set, `commonNeoforgeCheck`,
      * and run `classes` task. If it succeeds, then the common code is compatible with NeoForge.
      */
     private fun setupCommonNeoforgeVerification(target: Project) {
@@ -163,9 +166,6 @@ class MultiloaderPlugin @Inject constructor(
 
         val commonNeoforgeCheck = sourceSets.register("commonNeoforgeCheck") {
             val mainOutput = target.files(main.output)
-
-            java.setSrcDirs(main.java.srcDirs)
-            main.kotlin?.let { kotlin?.setSrcDirs(it.srcDirs) }
 
             resources.setSrcDirs(emptyList<Any>())
 
@@ -178,6 +178,27 @@ class MultiloaderPlugin @Inject constructor(
             )
 
             runtimeClasspath = output + compileClasspath
+        }
+        // Recompile common sources against NeoForge without assigning their directories
+        // to this internal source set. Source roots stay owned by main in IDE models.
+        target.tasks.named<JavaCompile>(commonNeoforgeCheck.get().compileJavaTaskName) {
+            setSource(main.java)
+        }
+        target.pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
+            val sources = checkNotNull(main.kotlin) {
+                "The Kotlin JVM plugin did not register Kotlin sources for main"
+            }
+            target.tasks.named<KotlinCompile>(commonNeoforgeCheck.get().getCompileTaskName("kotlin")) {
+                setSource(sources)
+            }
+        }
+        target.pluginManager.withPlugin("scala") {
+            val sources = checkNotNull(main.scala) {
+                "The Scala plugin did not register Scala sources for main"
+            }
+            target.tasks.named<ScalaCompile>(commonNeoforgeCheck.get().getCompileTaskName("scala")) {
+                setSource(sources)
+            }
         }
         val commonNeoforgeCheckClasses = target.tasks.named(commonNeoforgeCheck.get().classesTaskName)
 
